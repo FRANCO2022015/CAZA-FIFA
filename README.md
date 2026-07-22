@@ -12,14 +12,14 @@ Bienvenido a **CAZA**, la plataforma digital interactiva diseñada por y para ap
 
 ## 💎 El Gran Valor Añadido: Una Base de Datos Creada desde la Experiencia Real
 
-A diferencia de cualquier otra plataforma con datos genéricos o aleatorios, la base de datos de **CAZA** posee un valor único e incomparable: **es el fruto de 4 años de trayectoria y seguimiento estadístico real dentro del juego**.
+A diferencia de cualquier otra plataforma con datos genéricos o aleatorios, la base de datos de **CAZA** posee un valor único e incomparable: **es el fruto de mis 4 años de trayectoria y seguimiento estadístico real dentro del juego, es decir, son los datos que recopile en todo este tiempo que he llevado jugando estos videojuegos**.
 
-Cada uno de los más de 400 futbolistas presentes en la plataforma y todas sus métricas (goles, asistencias, partidos y promedios) provienen del **registro histórico obtenido a lo largo de 4 años de juego constante**:
+Cada uno de los más de 400 futbolistas presentes en la plataforma y todas sus métricas (goles, asistencias, partidos y promedios) provienen de mi registro histórico obtenido a lo largo de 4 años de juego.
 
 * ⚽ **En FIFA:** Datos recopilados a través de múltiples temporadas en el *Modo Carrera como Director Técnico (DT)*.
 * 🎮 **En eFootball:** Estadísticas de rendimiento compitiendo en el exigente modo de *Divisiones*.
 
-De esta forma, **CAZA** no solo presenta números: refleja la verdadera eficacia, rendimiento y comportamiento de cada jugador en la cancha virtual bajo la dirección del usuario a lo largo de los años.
+De esta forma, **CAZA** no solo presenta números: refleja la verdadera eficacia, rendimiento y comportamiento de cada jugador en la cancha virtual bajo mi dirección del usuario a lo largo de los años.
 
 ---
 
@@ -46,7 +46,7 @@ Para ejecutar este proyecto en tu computadora local, sigue estos pasos:
    ```bash
    ./mvnw spring-boot:run
    ```
-   *(En Windows PowerShell: `.\mvnw.cmd spring-boot:run`)*
+   
 
 El servidor backend estará escuchando en `http://localhost:8080`. Se ejecutarán las migraciones e inicializaciones automáticas (creando las tablas y la cuenta de administrador inicial).
 
@@ -123,4 +123,4 @@ Abre tu navegador e ingresa a la dirección indicada por Vite: `http://localhost
 
 ## 🏆 Conclusión
 
-> *"CAZA es la síntesis perfecta entre el análisis de datos futbolísticos y la pasión del gaming. Al alimentar la plataforma con 4 años de datos reales cosechados en el Modo Carrera de FIFA y las Divisiones de eFootball, el proyecto ofrece una herramienta inmersiva, auténtica y con un valor sentimental y técnico incomparable para cualquier apasionado de la simulación futbolística."*
+> *"CAZA es la síntesis perfecta entre el análisis de datos futbolísticos mi pasión del gaming. Al alimentar la plataforma con 4 años de datos reales cosechados en el Modo Carrera de FIFA y las Divisiones de eFootball, el proyecto ofrece una herramienta inmersiva, auténtica y con un valor sentimental y técnico incomparable para cualquier apasionado de la simulación futbolística, especialmente para mi"*
