@@ -1,0 +1,196 @@
+/* ── Google Fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base ── */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: #0D0D1A;
+  color: #ffffff;
+  font-family: 'Outfit', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #12122A;
+}
+::-webkit-scrollbar-thumb {
+  background: #6C63FF55;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #6C63FF;
+}
+
+/* ── Glassmorphism Card ── */
+.glass-card {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+}
+
+.glass-card-elevated {
+  background: rgba(108, 99, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(108, 99, 255, 0.2);
+  border-radius: 16px;
+}
+
+/* ── Gradient Text ── */
+.gradient-text {
+  background: linear-gradient(135deg, #6C63FF 0%, #FF6584 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-green {
+  background: linear-gradient(135deg, #43E97B 0%, #38F9D7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Buttons ── */
+.btn-primary {
+  @apply px-6 py-3 rounded-xl font-semibold text-white transition-all duration-200;
+  background: linear-gradient(135deg, #6C63FF 0%, #9C63FF 100%);
+  box-shadow: 0 4px 15px rgba(108, 99, 255, 0.3);
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(108, 99, 255, 0.5);
+}
+.btn-primary:active {
+  transform: translateY(0);
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  @apply px-6 py-3 rounded-xl font-semibold transition-all duration-200;
+  background: transparent;
+  border: 1px solid rgba(108, 99, 255, 0.5);
+  color: #6C63FF;
+}
+.btn-secondary:hover {
+  background: rgba(108, 99, 255, 0.1);
+  border-color: #6C63FF;
+  transform: translateY(-1px);
+}
+
+.btn-danger {
+  @apply px-4 py-2 rounded-lg font-medium text-white transition-all duration-200;
+  background: linear-gradient(135deg, #FF6584 0%, #FF4B6E 100%);
+  box-shadow: 0 4px 15px rgba(255, 101, 132, 0.2);
+}
+.btn-danger:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(255, 101, 132, 0.4);
+}
+
+/* ── Inputs ── */
+.input-dark {
+  @apply w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.input-dark:focus {
+  border-color: #6C63FF;
+  background: rgba(108, 99, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.15);
+}
+
+/* ── Position Badges ── */
+.badge-portero   { background: rgba(239, 68,  68,  0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+.badge-defensa   { background: rgba(59,  130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+.badge-centrocampista { background: rgba(234, 179, 8, 0.2); color: #fbbf24; border: 1px solid rgba(234,179,8,0.3); }
+.badge-delantero { background: rgba(34,  197, 94,  0.2); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+
+/* ── Animations ── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(108, 99, 255, 0.3); }
+  50%       { box-shadow: 0 0 40px rgba(108, 99, 255, 0.6); }
+}
+@keyframes spin-gradient {
+  to { transform: rotate(360deg); }
+}
+@keyframes wave {
+  0%, 100% { transform: scaleY(0.3); }
+  50%       { transform: scaleY(1.0); }
+}
+@keyframes typing {
+  0%, 100% { opacity: 0; }
+  50%       { opacity: 1; }
+}
+
+.animate-fadeIn  { animation: fadeIn  0.4s ease forwards; }
+.animate-slideUp { animation: slideUp 0.5s ease forwards; }
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+/* ── Gradient Backgrounds ── */
+.bg-gradient-main {
+  background: radial-gradient(ellipse at 20% 50%, rgba(108, 99, 255, 0.08) 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 20%, rgba(255, 101, 132, 0.06) 0%, transparent 60%),
+              #0D0D1A;
+}
+
+/* ── Player Card Hover ── */
+.player-card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.player-card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(108, 99, 255, 0.2);
+}
+
+/* ── Navbar ── */
+.navbar-glass {
+  background: rgba(13, 13, 26, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ── Waveform (Songs page) ── */
+.waveform-bar {
+  width: 4px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #6C63FF, #FF6584);
+  animation: wave 1s ease-in-out infinite;
+}
+.waveform-bar:nth-child(2) { animation-delay: 0.1s; }
+.waveform-bar:nth-child(3) { animation-delay: 0.2s; }
+.waveform-bar:nth-child(4) { animation-delay: 0.3s; }
+.waveform-bar:nth-child(5) { animation-delay: 0.4s; }
+.waveform-bar:nth-child(6) { animation-delay: 0.3s; }
+.waveform-bar:nth-child(7) { animation-delay: 0.2s; }
+.waveform-bar:nth-child(8) { animation-delay: 0.1s; }
