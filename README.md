@@ -6,10 +6,16 @@ Bienvenido a **CAZA**, la plataforma digital interactiva diseñada por y para ap
 
 ## 🎬 Demostración en Video (Video Demo)
 
-A continuación puedes ver la demostración interactiva en video sobre el funcionamiento completo de la plataforma **CAZA**:
+Puedes ver el recorrido demostrativo completo en video sobre el funcionamiento de la plataforma **CAZA** en el siguiente enlace:
 
 <div align="center">
-  <video src="https://github.com/FRANCO2022015/CAZA-FIFA/blob/main/Caza3.mp4?raw=true" controls="controls" width="100%" style="max-width: 850px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);"></video>
+  <br>
+  <a href="https://drive.google.com/file/d/15zWswcHvnSt8cehlb1d3gmsLqjsgFul1/view?usp=sharing" target="_blank">
+    <img src="https://img.shields.io/badge/▶️_VER_DEMO_EN_VIDEO-Google_Drive-FF4500?style=for-the-badge&logo=googledrive&logoColor=white" alt="Ver Demo en Google Drive" height="50">
+  </a>
+  <br><br>
+  <p><i><b><a href="https://drive.google.com/file/d/15zWswcHvnSt8cehlb1d3gmsLqjsgFul1/view?usp=sharing" target="_blank">▶️ Haz clic aquí para ver o reproducir la demostración en video en Google Drive</a></b></i></p>
+  <br>
 </div>
 
 ---
