@@ -28,6 +28,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
+        authApi.getMe().then(fresh => {
+          setUser(fresh);
+          localStorage.setItem('caza_user', JSON.stringify(fresh));
+        }).catch(() => { /* API interceptor handles an expired token. */ });
       } catch {
         localStorage.removeItem('caza_token');
         localStorage.removeItem('caza_user');

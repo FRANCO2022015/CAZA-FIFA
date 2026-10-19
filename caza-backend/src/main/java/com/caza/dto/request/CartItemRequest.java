@@ -12,7 +12,7 @@ public record CartItemRequest(
         Long jugadorId,  // eFootball — puede ser null si es FIFA
 
         @Min(value = 1, message = "La cantidad debe ser al menos 1")
-        Integer cantidad
+        @jakarta.validation.constraints.Max(100) Integer cantidad
 ) {
     public CartItemRequest {
         if (playerId == null && jugadorId == null) {

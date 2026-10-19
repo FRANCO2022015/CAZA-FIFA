@@ -1,154 +1,76 @@
 package com.caza.service.impl;
-
-import com.caza.dto.response.PlayerResponse;
-import com.caza.dto.response.PurchaseResponse;
-import com.caza.exception.InsufficientBalanceException;
-import com.caza.exception.ResourceNotFoundException;
-import com.caza.model.CartItem;
-import com.caza.model.Jugador;
-import com.caza.model.Player;
-import com.caza.model.Purchase;
-import com.caza.model.User;
-import com.caza.repository.CartItemRepository;
-import com.caza.repository.PurchaseRepository;
-import com.caza.repository.UserRepository;
+import com.caza.dto.response.*;
+import com.caza.exception.*;
+import com.caza.model.*;
+import com.caza.repository.*;
 import com.caza.service.interfaces.PurchaseService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
-@Transactional
+@Service @RequiredArgsConstructor @Transactional
 public class PurchaseServiceImpl implements PurchaseService {
+ private final PurchaseRepository purchaseRepository;
+ private final CartItemRepository cartItemRepository;
+ private final UserRepository userRepository;
+ private final ObjectMapper mapper;
 
-    private final PurchaseRepository purchaseRepository;
-    private final CartItemRepository cartItemRepository;
-    private final UserRepository userRepository;
-
-    @Override
-    public PurchaseResponse checkout(Long userId) {
-        List<CartItem> cartItems = cartItemRepository.findByUserId(userId);
-        if (cartItems.isEmpty()) {
-            throw new IllegalStateException("El carrito está vacío");
-        }
-
-        // Calcular total soportando tanto jugadores FIFA (player) como eFootball (jugador)
-        BigDecimal total = cartItems.stream()
-                .map(item -> getPrecioItem(item).multiply(BigDecimal.valueOf(item.getCantidad())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
-
-        if (user.getSaldo().compareTo(total) < 0) {
-            throw new InsufficientBalanceException(
-                    "Saldo insuficiente. Necesitas $" + total + " pero tienes $" + user.getSaldo()
-            );
-        }
-
-        user.setSaldo(user.getSaldo().subtract(total));
-        userRepository.save(user);
-
-        // Separar jugadores FIFA de eFootball para guardar en Purchase
-        List<Player> players = cartItems.stream()
-                .filter(item -> item.getPlayer() != null)
-                .map(CartItem::getPlayer)
-                .toList();
-
-        Purchase purchase = Purchase.builder()
-                .user(user)
-                .players(players)
-                .precioTotal(total)
-                .build();
-        purchase = purchaseRepository.save(purchase);
-
-        cartItemRepository.deleteByUserId(userId);
-
-        return mapToResponse(purchase, cartItems);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PurchaseResponse> getUserPurchases(Long userId) {
-        return purchaseRepository.findByUserIdOrderByFechaCompraDesc(userId)
-                .stream().map(p -> mapToResponse(p, List.of())).toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public PurchaseResponse getPurchaseById(Long purchaseId) {
-        Purchase purchase = purchaseRepository.findById(purchaseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Purchase", "id", purchaseId));
-        return mapToResponse(purchase, List.of());
-    }
-
-    // ─── Helpers ─────────────────────────────────────────────────────────────
-
-    /**
-     * Devuelve el precio del ítem sin importar si es jugador FIFA o eFootball.
-     */
-    private BigDecimal getPrecioItem(CartItem item) {
-        if (item.getJugador() != null) {
-            BigDecimal precio = item.getJugador().getPrecio();
-            return precio != null ? precio : BigDecimal.ZERO;
-        }
-        if (item.getPlayer() != null) {
-            return item.getPlayer().getPrecio();
-        }
-        return BigDecimal.ZERO;
-    }
-
-    /**
-     * Construye el PurchaseResponse combinando jugadores FIFA y eFootball.
-     * Si cartItems está vacío (al leer historial), usa solo los players guardados en Purchase.
-     */
-    private PurchaseResponse mapToResponse(Purchase p, List<CartItem> originalItems) {
-        List<PlayerResponse> playerResponses = new ArrayList<>();
-
-        // Jugadores FIFA guardados en la relación ManyToMany de Purchase
-        p.getPlayers().forEach(player -> playerResponses.add(
-                PlayerResponse.builder()
-                        .id(player.getId())
-                        .nombre(player.getNombre())
-                        .nacionalidad(player.getNacionalidad())
-                        .posicion(player.getPosicion())
-                        .edad(player.getEdad())
-                        .precio(player.getPrecio())
-                        .imagenUrl(player.getImagenUrl())
-                        .activo(player.getActivo())
-                        .build()
-        ));
-
-        // Jugadores eFootball del momento del checkout (no guardados en Purchase.players)
-        originalItems.stream()
-                .filter(item -> item.getJugador() != null)
-                .forEach(item -> {
-                    Jugador j = item.getJugador();
-                    playerResponses.add(
-                            PlayerResponse.builder()
-                                    .id(j.getId())
-                                    .nombre(j.getNombre() + " [eFootball]")
-                                    .nacionalidad("eFootball")
-                                    .posicion(null)
-                                    .edad(0)
-                                    .precio(j.getPrecio() != null ? j.getPrecio() : BigDecimal.ZERO)
-                                    .imagenUrl(null)
-                                    .activo(true)
-                                    .build()
-                    );
-                });
-
-        return PurchaseResponse.builder()
-                .id(p.getId())
-                .fechaCompra(p.getFechaCompra())
-                .precioTotal(p.getPrecioTotal())
-                .players(playerResponses)
-                .userName(p.getUser().getNombre())
-                .build();
-    }
+ public PurchaseResponse checkout(Long userId) {
+   User user = userRepository.findForUpdate(userId).orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+   List<CartItem> items = cartItemRepository.findByUserId(userId);
+   if(items.isEmpty()) throw new IllegalStateException("El carrito está vacío");
+   List<PlayerResponse> detail = items.stream().map(this::snapshot).toList();
+   BigDecimal total = detail.stream().map(p -> p.getPrecio().multiply(BigDecimal.valueOf(p.getCantidad()))).reduce(BigDecimal.ZERO, BigDecimal::add);
+   if(user.getSaldo().compareTo(total)<0) throw new InsufficientBalanceException("Saldo insuficiente");
+   user.setSaldo(user.getSaldo().subtract(total));
+   userRepository.save(user);
+   Purchase purchase = Purchase.builder().user(user).precioTotal(total)
+       .players(items.stream().filter(i -> i.getPlayer()!=null).map(CartItem::getPlayer).toList()).build();
+   try { purchase.setItemsSnapshot(mapper.writeValueAsString(detail)); }
+   catch(Exception e) { throw new IllegalStateException("No se pudo guardar el detalle de compra", e); }
+   purchase = purchaseRepository.save(purchase);
+   cartItemRepository.deleteByUserId(userId);
+   return response(purchase);
+ }
+ private PlayerResponse snapshot(CartItem i) {
+   if(i.getCantidad()==null || i.getCantidad()<1 || i.getCantidad()>100) throw new IllegalArgumentException("Cantidad inválida");
+   PlayerResponse p;
+   if(i.getJugador()!=null) {
+     Jugador j=i.getJugador();
+     p=PlayerResponse.builder().id(j.getId()).nombre(j.getNombre()).gameType("EFOOTBALL")
+         .nacionalidad("eFootball").precio(j.getPrecio()).imagenUrl(j.getImagenUrl()).activo(true).build();
+   } else if(i.getPlayer()!=null && Boolean.TRUE.equals(i.getPlayer().getActivo())) {
+     p=fifa(i.getPlayer());
+   } else throw new IllegalArgumentException("Jugador no disponible");
+   if(p.getPrecio()==null || p.getPrecio().signum()<0) throw new IllegalArgumentException("Precio inválido");
+   p.setCantidad(i.getCantidad());
+   return p;
+ }
+ private PlayerResponse fifa(Player p) {
+   return PlayerResponse.builder().id(p.getId()).nombre(p.getNombre()).gameType("FIFA").cantidad(1)
+      .nacionalidad(p.getNacionalidad()).posicion(p.getPosicion()).edad(p.getEdad())
+      .precio(p.getPrecio()).imagenUrl(p.getImagenUrl()).activo(p.getActivo()).build();
+ }
+ @Transactional(readOnly=true)
+ public List<PurchaseResponse> getUserPurchases(Long userId) {
+   return purchaseRepository.findByUserIdOrderByFechaCompraDesc(userId).stream().map(this::response).toList();
+ }
+ @Transactional(readOnly=true)
+ public PurchaseResponse getPurchaseById(Long id, Long userId, boolean admin) {
+   Purchase p=purchaseRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Purchase", "id", id));
+   if(!admin && !p.getUser().getId().equals(userId)) throw new UnauthorizedException("Esta compra pertenece a otro usuario");
+   return response(p);
+ }
+ private PurchaseResponse response(Purchase p) {
+   List<PlayerResponse> detail;
+   if(p.getItemsSnapshot()!=null) {
+     try { detail=mapper.readValue(p.getItemsSnapshot(), new TypeReference<List<PlayerResponse>>(){}); }
+     catch(Exception e) { throw new IllegalStateException("Detalle de compra ilegible",e); }
+   } else { detail=p.getPlayers().stream().map(this::fifa).toList(); }
+   return PurchaseResponse.builder().id(p.getId()).fechaCompra(p.getFechaCompra()).precioTotal(p.getPrecioTotal()).players(detail).userName(p.getUser().getNombre()).build();
+ }
 }

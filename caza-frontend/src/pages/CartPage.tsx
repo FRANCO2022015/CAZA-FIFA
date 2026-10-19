@@ -6,6 +6,7 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 import EmptyState from '../components/common/EmptyState';
 import { useCart } from '../hooks/useCart';
 import { useAuth } from '../hooks/useAuth';
+import { authApi } from '../api/auth';
 import { purchasesApi } from '../api/purchases';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -23,7 +24,7 @@ const CartPage: React.FC = () => {
     try {
       setCheckingOut(true);
       const purchase = await purchasesApi.checkout();
-      updateBalance((user?.saldo ?? 0) - purchase.precioTotal);
+      try { updateBalance((await authApi.getMe()).saldo); } catch { /* Purchase succeeded; refresh later. */ }
       await fetchCart();
       toast.success(`¡Compra exitosa! Gastaste $${purchase.precioTotal.toLocaleString()}`);
       navigate('/purchases');

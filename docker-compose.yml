@@ -1,76 +1,20 @@
-version: '3.8'
-
+# Opción para ejecutar el backend con una base ya restaurada.
+# Requiere variables del ejemplo caza-backend/.env.example en tu entorno.
+# No inicia una base vacía ni ejecuta seeds.
 services:
-  # ─────────────────────────────────────────────
-  # PostgreSQL Database
-  # ─────────────────────────────────────────────
-  postgres:
-    image: postgres:15-alpine
-    container_name: caza_postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: caza_db
-      POSTGRES_USER: caza_user
-      POSTGRES_PASSWORD: caza_pass
-    ports:
-      - "5433:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      # ./caza-backend/src/main/resources/db/init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - caza_network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U caza_user -d caza_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # ─────────────────────────────────────────────
-  # Spring Boot Backend
-  # ─────────────────────────────────────────────
   backend:
-    build:
-      context: ./caza-backend
-      dockerfile: Dockerfile
-    container_name: caza_backend
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
+    build: ./caza-backend
+    ports:
+      - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/caza_db
-      SPRING_DATASOURCE_USERNAME: caza_user
-      SPRING_DATASOURCE_PASSWORD: caza_pass
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-      JWT_EXPIRATION: 86400000
-      GEMINI_API_KEY: ${GEMINI_API_KEY}
-      CORS_ALLOWED_ORIGINS: http://localhost:5173,http://localhost:80
-    ports:
-      - "8081:8080"
-    networks:
-      - caza_network
-
-  # ─────────────────────────────────────────────
-  # React Frontend (Production Build via Nginx)
-  # ─────────────────────────────────────────────
-  frontend:
-    build:
-      context: ./caza-frontend
-      dockerfile: Dockerfile
-    container_name: caza_frontend
-    restart: unless-stopped
-    depends_on:
-      - backend
-    ports:
-      - "80:80"
-    networks:
-      - caza_network
-
-volumes:
-  postgres_data:
-    driver: local
-
-networks:
-  caza_network:
-    driver: bridge
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:?Configura la URL JDBC}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:?Configura el rol}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:?Configura la clave}
+      APPLICATION_JWT_SECRET: ${APPLICATION_JWT_SECRET:?Configura un secreto aleatorio}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:?Configura el frontend}
+      CLOUD_ADMIN_EMAIL: ${CLOUD_ADMIN_EMAIL:-admin@caza.com}
+      CLOUD_ADMIN_PASSWORD: ${CLOUD_ADMIN_PASSWORD:?Configura una clave nueva}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:?Configura Cloudinary}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:?Configura Cloudinary}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:?Configura Cloudinary}

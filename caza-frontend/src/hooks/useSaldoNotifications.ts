@@ -1,3 +1,4 @@
+import { authApi } from '../api/auth';
 import { useEffect, useRef } from 'react';
 import { saldoRequestsApi, type SaldoRequestItem } from '../api/saldoRequests';
 import { useAuth } from './useAuth';
@@ -21,11 +22,14 @@ export function useSaldoNotifications() {
 
     // Restaurar el mapa guardado en sessionStorage para esta sesión
     try {
-      const stored = sessionStorage.getItem(STORAGE_KEY);
+      const stored = sessionStorage.getItem(`${STORAGE_KEY}_${user.id}`);
       if (stored) knownStates.current = JSON.parse(stored);
     } catch { /* ignore */ }
 
+    let polling = false;
     const poll = async () => {
+      if (polling || document.hidden) return;
+      polling = true;
       try {
         const solicitudes: SaldoRequestItem[] = await saldoRequestsApi.getMine();
 
@@ -49,7 +53,7 @@ export function useSaldoNotifications() {
             knownStates.current[sol.id] = curr;
             // Actualizar el saldo mostrado en la UI (no recarga la página)
             if (updateBalance && user?.saldo != null) {
-              updateBalance(Number(user.saldo) + Number(sol.montoSolicitado));
+              updateBalance((await authApi.getMe()).saldo);
             }
           }
 
@@ -64,10 +68,10 @@ export function useSaldoNotifications() {
         }
 
         // Persistir en sessionStorage
-        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(knownStates.current));
+        sessionStorage.setItem(`${STORAGE_KEY}_${user.id}`, JSON.stringify(knownStates.current));
       } catch {
-        // fail silently — no bloquear la UI
-      }
+        // Retry on the next interval.
+      } finally { polling = false; }
     };
 
     // Ejecutar inmediatamente para cargar estados iniciales

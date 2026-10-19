@@ -68,14 +68,14 @@ public class SaldoRequestService {
 
     /** Admin aprueba la solicitud y añade saldo al usuario */
     public SaldoRequestResponse aprobar(Long id) {
-        SaldoRequest sr = repo.findById(id)
+        SaldoRequest sr = repo.findForUpdate(id)
                 .orElseThrow(() -> new ResourceNotFoundException("SaldoRequest", "id", id));
 
         if (sr.getEstado() != SaldoRequest.EstadoSolicitud.PENDIENTE) {
             throw new IllegalStateException("La solicitud ya fue procesada: " + sr.getEstado());
         }
 
-        User user = sr.getUser();
+        User user = userRepository.findForUpdate(sr.getUser().getId()).orElseThrow();
         user.setSaldo(user.getSaldo().add(sr.getMontoSolicitado()));
         userRepository.save(user);
 
@@ -89,7 +89,7 @@ public class SaldoRequestService {
 
     /** Admin rechaza la solicitud */
     public SaldoRequestResponse rechazar(Long id) {
-        SaldoRequest sr = repo.findById(id)
+        SaldoRequest sr = repo.findForUpdate(id)
                 .orElseThrow(() -> new ResourceNotFoundException("SaldoRequest", "id", id));
 
         if (sr.getEstado() != SaldoRequest.EstadoSolicitud.PENDIENTE) {

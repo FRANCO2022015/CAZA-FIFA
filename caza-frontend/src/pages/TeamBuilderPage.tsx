@@ -1,7 +1,9 @@
+import LineupTransfer from '../components/LineupTransfer';
 import React, { useEffect, useState, useCallback } from 'react';
 import { Users, Gamepad2, ChevronDown, Search, X, Check, Trophy, Star, Bookmark, Trash2, Save } from 'lucide-react';
 import Layout from '../components/layout/Layout';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import { allFifaPlayers, allEfootballPlayers } from '../api/catalogue';
 import { playersApi } from '../api/players';
 import { jugadoresApi } from '../api/jugadores';
 import { purchasesApi } from '../api/purchases';
@@ -407,22 +409,22 @@ const TeamBuilderPage: React.FC = () => {
       try {
         // Todos los jugadores
         const [fifaPage, efPage] = await Promise.all([
-          playersApi.getAll(0, 2000, 'nombre', 'asc'),
-          jugadoresApi.getAll(0, 2000, 'nombre', 'asc'),
+          allFifaPlayers(),
+          allEfootballPlayers(),
         ]);
-        setAllFifa(fifaPage.content);
-        setAllEfootball(efPage.content);
+        setAllFifa(fifaPage);
+        setAllEfootball(efPage);
 
         // Jugadores comprados
         const purchases = await purchasesApi.getPurchases();
-        const boughtIds = new Set(purchases.flatMap(p => p.players.map(pl => pl.id)));
-        setMyFifa(fifaPage.content.filter(p => boughtIds.has(p.id)));
+        const boughtIds = new Set(purchases.flatMap(p => p.players.filter(pl => pl.gameType !== 'EFOOTBALL').map(pl => pl.id)));
+        setMyFifa(fifaPage.filter(p => boughtIds.has(p.id)));
 
-        // eFootball comprados — por ahora todos (no hay compra separada de eFootball)
-        // Mostramos todos los de eFootball como "propios" si fueron comprados alguna vez
-        setMyEfootball(efPage.content);
+        // Solo jugadores eFootball conservados en el detalle de compra.
+        const efBought = new Set(purchases.flatMap(p => p.players.filter(pl => pl.gameType === 'EFOOTBALL').map(pl => pl.id)));
+        setMyEfootball(efPage.filter(p => efBought.has(p.id)));
       } catch {
-        // silencioso
+        toast.error('No se pudieron cargar los jugadores. Recarga cuando el servidor esté disponible.');
       } finally {
         setIsLoading(false);
       }
@@ -492,7 +494,9 @@ const TeamBuilderPage: React.FC = () => {
     setGameType(saved.gameType);
     setTeamMode(saved.teamMode);
     setFormationKey(saved.formationKey);
-    setLineup(saved.lineup);
+    const catalogue: AnyPlayer[] = saved.gameType === 'FIFA' ? allFifa : allEfootball;
+    setLineup(Object.fromEntries(Object.entries(saved.lineup).map(([slot, player]) =>
+      [slot, catalogue.find(current => current.id === player.id) ?? player])));
     toast.success(`🎮 Alineación "${saved.name}" cargada`);
   };
 
@@ -545,6 +549,7 @@ const TeamBuilderPage: React.FC = () => {
 
   return (
     <Layout>
+      {user && <LineupTransfer userId={user.id} storageKey={storageKey} formations={Object.keys(FORMATIONS)} />}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>

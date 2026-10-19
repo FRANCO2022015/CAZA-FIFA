@@ -10,6 +10,8 @@ import java.util.Optional;
 @Repository
 public interface PlayerStatsRepository extends JpaRepository<PlayerStats, Long> {
 
+    List<PlayerStats> findByPlayerIdIn(java.util.Collection<Long> ids);
+
     List<PlayerStats> findByPlayerId(Long playerId);
 
     Optional<PlayerStats> findByIdAndPlayerId(Long id, Long playerId);

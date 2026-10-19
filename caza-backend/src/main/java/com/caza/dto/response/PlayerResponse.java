@@ -16,6 +16,8 @@ import java.util.List;
 public class PlayerResponse {
 
     private Long id;
+    private String gameType;
+    private Integer cantidad;
     private String nombre;
     private String nacionalidad;
     private Position posicion;

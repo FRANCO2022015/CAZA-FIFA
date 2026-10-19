@@ -18,6 +18,8 @@ export interface PlayerStats {
 }
 
 export interface Player {
+  gameType?: "FIFA" | "EFOOTBALL";
+  cantidad?: number;
   id: number;
   nombre: string;
   nacionalidad: string;

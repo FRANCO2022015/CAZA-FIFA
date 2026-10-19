@@ -119,28 +119,33 @@ public class PlayerServiceImpl implements PlayerService {
         String posicionStr = posicion != null ? posicion.name() : null;
 
         if ("goles".equalsIgnoreCase(sortBy)) {
-            pageable = PageRequest.of(page, size);
+            pageable = PageRequest.of(page, Math.min(100, Math.max(1, size)));
             players = isDesc
                     ? playerRepository.searchPlayersOrderByGolesDesc(nombre, posicionStr, nacionalidad, minPrecio, maxPrecio, pageable)
                     : playerRepository.searchPlayersOrderByGolesAsc(nombre, posicionStr, nacionalidad, minPrecio, maxPrecio, pageable);
         } else if ("asistencias".equalsIgnoreCase(sortBy)) {
-            pageable = PageRequest.of(page, size);
+            pageable = PageRequest.of(page, Math.min(100, Math.max(1, size)));
             players = isDesc
                     ? playerRepository.searchPlayersOrderByAsistenciasDesc(nombre, posicionStr, nacionalidad, minPrecio, maxPrecio, pageable)
                     : playerRepository.searchPlayersOrderByAsistenciasAsc(nombre, posicionStr, nacionalidad, minPrecio, maxPrecio, pageable);
         } else {
             String cleanSortBy = (sortBy == null || sortBy.isBlank()) ? "nombre" : sortBy;
             Sort sort = isDesc ? Sort.by(cleanSortBy).descending() : Sort.by(cleanSortBy).ascending();
-            pageable = PageRequest.of(page, size, sort);
+            pageable = PageRequest.of(page, Math.min(100, Math.max(1, size)), sort);
             players = playerRepository.searchPlayers(nombre, posicionStr, nacionalidad, minPrecio, maxPrecio, pageable);
         }
 
-        Page<PlayerResponse> responses = players.map(this::mapToResponse);
+        var statsByPlayer = playerStatsRepository.findByPlayerIdIn(players.getContent().stream().map(Player::getId).toList())
+                .stream().collect(java.util.stream.Collectors.groupingBy(s -> s.getPlayer().getId()));
+        Page<PlayerResponse> responses = players.map(p -> mapToResponse(p, statsByPlayer.getOrDefault(p.getId(), List.of())));
         return PagedResponse.of(responses);
     }
 
     private PlayerResponse mapToResponse(Player player) {
-        List<PlayerStats> stats = playerStatsRepository.findByPlayerId(player.getId());
+        return mapToResponse(player, playerStatsRepository.findByPlayerId(player.getId()));
+    }
+
+    private PlayerResponse mapToResponse(Player player, List<PlayerStats> stats) {
         List<PlayerStatsResponse> statsResponses = stats.stream()
                 .map(s -> new PlayerStatsResponse(
                         s.getId(),

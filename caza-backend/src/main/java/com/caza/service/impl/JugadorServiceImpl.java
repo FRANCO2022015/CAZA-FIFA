@@ -32,7 +32,7 @@ public class JugadorServiceImpl implements JugadorService {
         Sort sort = sortDir.equalsIgnoreCase("desc")
                 ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
-        Pageable pageable = PageRequest.of(page, size, sort);
+        Pageable pageable = PageRequest.of(page, Math.min(100, Math.max(1, size)), sort);
         Page<Jugador> jugadores = jugadorRepository.findAll(pageable);
         return PagedResponse.of(jugadores.map(this::mapToResponse));
     }
@@ -51,7 +51,7 @@ public class JugadorServiceImpl implements JugadorService {
         Sort sort = sortDir.equalsIgnoreCase("desc")
                 ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
-        Pageable pageable = PageRequest.of(page, size, sort);
+        Pageable pageable = PageRequest.of(page, Math.min(100, Math.max(1, size)), sort);
         Page<Jugador> jugadores = jugadorRepository.searchJugadores(nombre, pageable);
         return PagedResponse.of(jugadores.map(this::mapToResponse));
     }
@@ -72,7 +72,7 @@ public class JugadorServiceImpl implements JugadorService {
         Sort sort = sortDir.equalsIgnoreCase("desc")
                 ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
-        Pageable pageable = PageRequest.of(page, size, sort);
+        Pageable pageable = PageRequest.of(page, Math.min(100, Math.max(1, size)), sort);
 
         Page<Jugador> jugadores = jugadorRepository.searchAdvanced(
                 nombre,
@@ -99,7 +99,7 @@ public class JugadorServiceImpl implements JugadorService {
                 .precio(request.precio() != null ? request.precio() : new java.math.BigDecimal("500.00"))
                 .imagenUrl(request.imagenUrl())
                 .build();
-        Jugador saved = jugadorRepository.save(jugador);
+        Jugador saved = jugadorRepository.saveAndFlush(jugador);
         log.info("Jugador eFootball creado: {} (id={})", saved.getNombre(), saved.getId());
         return mapToResponse(saved);
     }
@@ -123,7 +123,7 @@ public class JugadorServiceImpl implements JugadorService {
             jugador.setImagenUrl(request.imagenUrl().isBlank() ? null : request.imagenUrl());
         }
 
-        Jugador saved = jugadorRepository.save(jugador);
+        Jugador saved = jugadorRepository.saveAndFlush(jugador);
         log.info("Jugador eFootball actualizado: {} (id={})", saved.getNombre(), saved.getId());
         return mapToResponse(saved);
     }

@@ -40,6 +40,9 @@ public class Purchase {
     )
     private List<Player> players = new ArrayList<>();
 
+    @Column(columnDefinition = "TEXT")
+    private String itemsSnapshot;
+
     @PrePersist
     protected void onCreate() {
         this.fechaCompra = LocalDateTime.now();

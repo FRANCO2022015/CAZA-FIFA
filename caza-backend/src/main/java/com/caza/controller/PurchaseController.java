@@ -40,7 +40,7 @@ public class PurchaseController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get purchase by ID")
-    public ResponseEntity<ApiResponse<PurchaseResponse>> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success(purchaseService.getPurchaseById(id)));
+    public ResponseEntity<ApiResponse<PurchaseResponse>> getById(@PathVariable Long id, @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(ApiResponse.success(purchaseService.getPurchaseById(id, user.getId(), user.getRol() == com.caza.model.Role.ADMIN)));
     }
 }

@@ -10,5 +10,5 @@ public interface PurchaseService {
 
     List<PurchaseResponse> getUserPurchases(Long userId);
 
-    PurchaseResponse getPurchaseById(Long id);
+    PurchaseResponse getPurchaseById(Long id, Long userId, boolean admin);
 }

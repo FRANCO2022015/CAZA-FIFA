@@ -44,8 +44,8 @@ public class CartController {
     public ResponseEntity<ApiResponse<CartResponse>> updateItem(
             @AuthenticationPrincipal User user,
             @PathVariable Long itemId,
-            @RequestBody Map<String, Integer> body) {
-        Integer cantidad = body.get("cantidad");
+            @Valid @RequestBody com.caza.dto.request.CartQuantityRequest body) {
+        Integer cantidad = body.cantidad();
         return ResponseEntity.ok(ApiResponse.success(cartService.updateItem(user.getId(), itemId, cantidad)));
     }
 

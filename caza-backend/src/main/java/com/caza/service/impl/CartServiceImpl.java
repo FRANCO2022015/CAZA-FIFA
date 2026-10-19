@@ -42,7 +42,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public CartResponse addItem(Long userId, CartItemRequest request) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findForUpdate(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
         if (request.jugadorId() != null) {
@@ -53,7 +53,9 @@ public class CartServiceImpl implements CartService {
             Optional<CartItem> existing = cartItemRepository.findByUserIdAndJugadorId(userId, request.jugadorId());
             if (existing.isPresent()) {
                 CartItem item = existing.get();
-                item.setCantidad(item.getCantidad() + request.cantidad());
+                int quantity = Math.addExact(item.getCantidad(), request.cantidad());
+                if (quantity > 100) throw new IllegalArgumentException("Máximo 100 unidades");
+                item.setCantidad(quantity);
                 cartItemRepository.save(item);
             } else {
                 cartItemRepository.save(CartItem.builder()
@@ -70,7 +72,9 @@ public class CartServiceImpl implements CartService {
             Optional<CartItem> existing = cartItemRepository.findByUserIdAndPlayerId(userId, request.playerId());
             if (existing.isPresent()) {
                 CartItem item = existing.get();
-                item.setCantidad(item.getCantidad() + request.cantidad());
+                int quantity = Math.addExact(item.getCantidad(), request.cantidad());
+                if (quantity > 100) throw new IllegalArgumentException("Máximo 100 unidades");
+                item.setCantidad(quantity);
                 cartItemRepository.save(item);
             } else {
                 cartItemRepository.save(CartItem.builder()
@@ -86,11 +90,13 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public CartResponse updateItem(Long userId, Long itemId, Integer cantidad) {
+        userRepository.findForUpdate(userId).orElseThrow();
         CartItem item = cartItemRepository.findById(itemId)
                 .orElseThrow(() -> new ResourceNotFoundException("CartItem", "id", itemId));
         if (!item.getUser().getId().equals(userId)) {
             throw new UnauthorizedException("No tienes permisos para modificar este item");
         }
+        if (cantidad == null || cantidad < 1 || cantidad > 100) throw new IllegalArgumentException("Cantidad inválida");
         item.setCantidad(cantidad);
         cartItemRepository.save(item);
         return getCart(userId);
@@ -98,6 +104,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public CartResponse removeItem(Long userId, Long itemId) {
+        userRepository.findForUpdate(userId).orElseThrow();
         CartItem item = cartItemRepository.findById(itemId)
                 .orElseThrow(() -> new ResourceNotFoundException("CartItem", "id", itemId));
         if (!item.getUser().getId().equals(userId)) {
@@ -109,6 +116,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public void clearCart(Long userId) {
+        userRepository.findForUpdate(userId).orElseThrow();
         cartItemRepository.deleteByUserId(userId);
     }
 

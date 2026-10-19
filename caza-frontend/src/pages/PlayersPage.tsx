@@ -647,7 +647,7 @@ const PlayersPage: React.FC = () => {
                 <JugadorCard
                   key={jugador.id}
                   jugador={jugador}
-                  onEdit={handleEditJugador}
+                  onEdit={isAdmin ? handleEditJugador : undefined}
                   onDelete={handleDeleteJugador}
                 />
               ))}

@@ -33,8 +33,12 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
 
+    @org.springframework.beans.factory.annotation.Value("${application.registration-enabled:false}")
+    private boolean registrationEnabled;
+
     @Override
     public AuthResponse register(RegisterRequest request) {
+        if (!registrationEnabled) throw new com.caza.exception.UnauthorizedException("Registro deshabilitado para esta aplicación personal");
         if (userRepository.existsByCorreo(request.correo())) {
             throw new DuplicateResourceException(
                     "An account with email '" + request.correo() + "' already exists"
