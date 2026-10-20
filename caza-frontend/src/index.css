@@ -194,3 +194,32 @@ body {
 .waveform-bar:nth-child(6) { animation-delay: 0.3s; }
 .waveform-bar:nth-child(7) { animation-delay: 0.2s; }
 .waveform-bar:nth-child(8) { animation-delay: 0.1s; }
+
+/* Player spotlight: animation is decorative, data remains visible without it. */
+.holo-stage{--glow:#a78bfa;--tilt-x:0deg;--tilt-y:0deg;position:relative;width:100%;height:360px;isolation:isolate;perspective:900px;overflow:hidden;border-radius:20px;background:radial-gradient(ellipse at 50% 100%,#7c3aed25,transparent 65%);margin-bottom:24px}
+.holo-football{--glow:#ff9d28;background:radial-gradient(ellipse at 50% 100%,#ff8c0025,transparent 65%)}
+.holo-caption{position:absolute;top:10px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:.18em;color:var(--glow);opacity:.85}
+.holo-aura{position:absolute;inset:16% 10% 12%;background:radial-gradient(ellipse,var(--glow),transparent 68%);opacity:.15}
+.holo-portrait{position:absolute;inset:40px 15% 44px;display:flex;justify-content:center;align-items:flex-end;transform:rotateX(var(--tilt-x)) rotateY(var(--tilt-y));transition:transform .15s ease-out;z-index:2}
+.holo-portrait img{max-height:100%;max-width:100%;object-fit:contain}
+.holo-cutout{filter:drop-shadow(0 0 14px var(--glow))}
+.holo-photo{border-radius:20px;border:1px solid var(--glow);box-shadow:0 0 25px #0008}
+.holo-initial{font-size:110px;font-weight:900;color:var(--glow)}
+.holo-rings{position:absolute;bottom:18px;left:12%;width:76%;height:48px;border:2px solid var(--glow);border-radius:50%;box-shadow:0 0 20px var(--glow),inset 0 0 20px var(--glow);opacity:.75}
+.holo-rings:after{content:'';position:absolute;inset:9px 17px;border:1px solid var(--glow);border-radius:50%}
+.holo-scan{position:absolute;inset:40px 15% 44px;z-index:3;pointer-events:none;background:repeating-linear-gradient(transparent 0 7px,#ffffff09 8px);opacity:.6}
+.holo-particles i{position:absolute;left:calc(12% + var(--i)*10%);bottom:30px;width:2px;height:2px;background:var(--glow);box-shadow:0 0 7px var(--glow);animation:holo-rise 5s linear infinite;animation-delay:calc(var(--i)*-.6s)}
+@keyframes holo-rise{from{transform:translateY(0);opacity:0}30%{opacity:.7}to{transform:translateY(-230px);opacity:0}}
+.stat-bar-row{position:relative;display:block;width:100%;padding:12px 14px;margin:6px 0 12px;border:1px solid transparent;border-radius:14px;text-align:left;background:#ffffff04;transition:background .2s,border-color .2s,transform .2s;color:#e5e7eb}
+.stat-bar-heading{display:flex;justify-content:space-between;gap:16px;margin-bottom:10px;font-size:14px}
+.stat-bar-heading strong{color:var(--bar-color);font-size:20px;font-variant-numeric:tabular-nums}
+.stat-bar-track{display:block;height:12px;background:#ffffff0b;border-radius:8px;overflow:hidden}
+.stat-bar-fill{display:block;height:100%;border-radius:8px;background:var(--bar-color);transition:width .6s,filter .2s;transform-origin:left;animation:bar-enter .5s ease-out}
+.stat-bar-row.is-active,.stat-bar-row:focus-visible{background:#ffffff0a;border-color:var(--bar-color);outline:2px solid transparent}
+.stat-bar-row.is-active .stat-bar-fill{filter:brightness(1.2);box-shadow:0 0 14px var(--bar-color)}
+.stat-bar-tip{position:absolute;right:14px;top:-12px;font-size:11px;padding:3px 8px;border-radius:6px;background:#151529;color:var(--bar-color);opacity:0;pointer-events:none}
+.stat-bar-row.is-active .stat-bar-tip{opacity:1}
+@keyframes bar-enter{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.pitch-modern{background:repeating-linear-gradient(0deg,#0b392f 0 10%,#104337 10% 20%);border:1px solid #4ade8055;box-shadow:inset 0 0 90px #0007,0 20px 60px #0004}
+@media(max-width:640px){.holo-stage{height:300px}}
+@media(prefers-reduced-motion:reduce){.holo-particles i,.stat-bar-fill{animation:none}.holo-portrait{transform:none!important}.stat-bar-row,.stat-bar-fill{transition:none}}

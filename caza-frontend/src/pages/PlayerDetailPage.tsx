@@ -1,3 +1,5 @@
+import PlayerHologram from '../components/players/PlayerHologram';
+import PlayerStatsChart from '../components/players/PlayerStatsChart';
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ShoppingCart, ArrowLeft, Star, Trophy, Users, Calendar } from 'lucide-react';
@@ -92,12 +94,7 @@ const PlayerDetailPage: React.FC = () => {
         {/* Left — image */}
         <div className="lg:col-span-1">
           <div className="glass-card p-6 flex flex-col items-center">
-            <div className="w-48 h-48 rounded-2xl flex items-center justify-center mb-6 overflow-hidden"
-                 style={{ background: 'linear-gradient(135deg, rgba(108,99,255,0.15), rgba(255,101,132,0.1))' }}>
-              {player.imagenUrl
-                ? <img src={player.imagenUrl} alt={player.nombre} className="w-full h-full object-cover" />
-                : <span className="text-6xl font-black gradient-text">{player.nombre.charAt(0)}</span>}
-            </div>
+            <PlayerHologram name={player.nombre} image={player.imagenUrl} cutout={player.hologramUrl} game="FIFA" />
             <span className="px-3 py-1 rounded-xl text-sm font-bold mb-4"
                   style={{ background: `${positionColors[player.posicion]}20`, color: positionColors[player.posicion] }}>
               {player.posicion}
@@ -145,19 +142,7 @@ const PlayerDetailPage: React.FC = () => {
               {player.stats.map(stat => (
                 <div key={stat.id} className="mb-4 pb-4 border-b last:border-0" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
                   <p className="text-sm text-purple-400 font-semibold mb-3">{stat.temporada}</p>
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { label: 'Goles', value: stat.goles },
-                      { label: 'Asistencias', value: stat.asistencias },
-                      { label: 'Partidos', value: stat.partidosJugados },
-                    ].map(({ label, value }) => (
-                      <div key={label} className="text-center p-3 rounded-xl"
-                           style={{ background: 'rgba(108,99,255,0.1)' }}>
-                        <div className="text-2xl font-black text-white">{value}</div>
-                        <div className="text-xs text-gray-400 mt-1">{label}</div>
-                      </div>
-                    ))}
-                  </div>
+                  <PlayerStatsChart goles={stat.goles} asistencias={stat.asistencias} partidos={stat.partidosJugados} label={`Temporada ${stat.temporada}`} />
                 </div>
               ))}
             </div>

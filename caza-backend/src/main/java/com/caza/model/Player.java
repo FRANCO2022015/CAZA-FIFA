@@ -39,6 +39,9 @@ public class Player {
     @Column(length = 500)
     private String imagenUrl;
 
+    @Column(length = 500)
+    private String hologramUrl;
+
     @Builder.Default
     @Column(nullable = false)
     private Boolean activo = true;

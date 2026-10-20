@@ -9,6 +9,7 @@ export interface JugadorCreatePayload {
   asistencias: number;
   precio?: number;
   imagenUrl?: string;
+  hologramUrl?: string;
 }
 
 export const jugadoresApi = {

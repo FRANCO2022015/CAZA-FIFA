@@ -1,4 +1,6 @@
 import React from 'react';
+import AuditPage from './pages/AuditPage';
+import ArchivePage from './pages/ArchivePage';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
@@ -65,6 +67,8 @@ const App: React.FC = () => {
               <Route path="/forum"        element={<ForumPage />} />
               <Route path="/forum/:id"    element={<ForumThreadPage />} />
               <Route path="/meetings"     element={<MeetingsPage />} />
+              <Route path="/admin/audit" element={<AuditPage />} />
+              <Route path="/admin/archive" element={<ArchivePage />} />
               <Route path="/admin"        element={<AdminPage />} />
               <Route path="/efootball/:id" element={<JugadorDetailPage />} />
               <Route path="/team-builder" element={<TeamBuilderPage />} />

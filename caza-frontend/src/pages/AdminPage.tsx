@@ -122,13 +122,13 @@ const AdminPage: React.FC = () => {
   });
 
   if (isLoading) return (
-    <Layout>
+    <Layout><div className="flex flex-wrap gap-3 mb-6"><a className="btn-primary" href="/admin/audit">Historial de cambios y PDF</a><a className="btn-primary" href="/admin/archive">Jugadores archivados</a></div>
       <div className="flex justify-center py-20"><LoadingSpinner size="lg" /></div>
     </Layout>
   );
 
   return (
-    <Layout>
+    <Layout><div className="flex flex-wrap gap-3 mb-6"><a className="btn-primary" href="/admin/audit">Historial de cambios y PDF</a><a className="btn-primary" href="/admin/archive">Jugadores archivados</a></div>
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
         <button onClick={() => navigate('/dashboard')}

@@ -20,6 +20,10 @@ public class Jugador {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean activo = true;
+
     @Column(nullable = false, columnDefinition = "TEXT")
     private String nombre;
 
@@ -41,6 +45,9 @@ public class Jugador {
     /** URL de la imagen del jugador (opcional) */
     @Column(length = 500)
     private String imagenUrl;
+
+    @Column(length = 500)
+    private String hologramUrl;
 
     // ── Columnas GENERATED ALWAYS en PostgreSQL ───────────────────────────────
     // Postgres las calcula automáticamente a partir de goles/asistencias/partidos.

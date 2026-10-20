@@ -27,6 +27,7 @@ export interface Player {
   edad: number;
   precio: number;
   imagenUrl?: string;
+  hologramUrl?: string;
   activo: boolean;
   stats?: PlayerStats[];
 }
@@ -156,6 +157,7 @@ export interface Jugador {
   asistencias: number;
   precio: number;
   imagenUrl?: string;
+  hologramUrl?: string;
   ga?: number;
   pg?: number;
   pa?: number;

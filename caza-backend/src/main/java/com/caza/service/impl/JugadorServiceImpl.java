@@ -33,14 +33,14 @@ public class JugadorServiceImpl implements JugadorService {
                 ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
         Pageable pageable = PageRequest.of(page, Math.min(100, Math.max(1, size)), sort);
-        Page<Jugador> jugadores = jugadorRepository.findAll(pageable);
+        Page<Jugador> jugadores = jugadorRepository.findByActivoTrue(pageable);
         return PagedResponse.of(jugadores.map(this::mapToResponse));
     }
 
     @Override
     @Transactional(readOnly = true)
     public JugadorResponse getById(Long id) {
-        Jugador jugador = jugadorRepository.findById(id)
+        Jugador jugador = jugadorRepository.findByIdAndActivoTrue(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Jugador", "id", id));
         return mapToResponse(jugador);
     }
@@ -98,6 +98,7 @@ public class JugadorServiceImpl implements JugadorService {
                 .asistencias(request.asistencias())
                 .precio(request.precio() != null ? request.precio() : new java.math.BigDecimal("500.00"))
                 .imagenUrl(request.imagenUrl())
+                .hologramUrl(request.hologramUrl())
                 .build();
         Jugador saved = jugadorRepository.saveAndFlush(jugador);
         log.info("Jugador eFootball creado: {} (id={})", saved.getNombre(), saved.getId());
@@ -106,11 +107,12 @@ public class JugadorServiceImpl implements JugadorService {
 
     @Override
     public JugadorResponse update(Long id, JugadorRequest request) {
-        Jugador jugador = jugadorRepository.findById(id)
+        Jugador jugador = jugadorRepository.findByIdAndActivoTrue(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Jugador", "id", id));
 
         // Solo actualizamos las columnas normales.
         // Postgres recalcula ga/pg/pa/pga automáticamente al hacer el UPDATE.
+        if (request.hologramUrl() != null) jugador.setHologramUrl(request.hologramUrl());
         jugador.setNombre(request.nombre());
         jugador.setPartidos(request.partidos());
         jugador.setGoles(request.goles());
@@ -130,9 +132,10 @@ public class JugadorServiceImpl implements JugadorService {
 
     @Override
     public void delete(Long id) {
-        Jugador jugador = jugadorRepository.findById(id)
+        Jugador jugador = jugadorRepository.findByIdAndActivoTrue(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Jugador", "id", id));
-        jugadorRepository.delete(jugador);
+        jugador.setActivo(false);
+        jugadorRepository.save(jugador);
         log.info("Jugador eFootball eliminado: {} (id={})", jugador.getNombre(), jugador.getId());
     }
 
@@ -147,6 +150,7 @@ public class JugadorServiceImpl implements JugadorService {
                 .asistencias(j.getAsistencias())
                 .precio(j.getPrecio())
                 .imagenUrl(j.getImagenUrl())
+                .hologramUrl(j.getHologramUrl())
                 // ga/pg/pa/pga vienen del @Generated — Hibernate los lee de Postgres
                 .ga(j.getGa())
                 .pg(j.getPg())

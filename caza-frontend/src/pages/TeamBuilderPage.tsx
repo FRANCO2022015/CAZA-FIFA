@@ -1,5 +1,6 @@
+import api from '../api/axiosConfig';
 import LineupTransfer from '../components/LineupTransfer';
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Users, Gamepad2, ChevronDown, Search, X, Check, Trophy, Star, Bookmark, Trash2, Save } from 'lucide-react';
 import Layout from '../components/layout/Layout';
 import LoadingSpinner from '../components/common/LoadingSpinner';
@@ -186,11 +187,19 @@ interface SlotProps {
   onClick: () => void;
   gameType: GameType;
   accentColor: string;
+  index?: number;
+  onMove?: (from:number,to:number)=>void;
 }
 
-const PitchSlot: React.FC<SlotProps> = ({ slot, player, onClick, gameType, accentColor }) => (
+const PitchSlot: React.FC<SlotProps> = ({ slot, player, onClick, gameType, accentColor, index, onMove }) => (
   <button
     onClick={onClick}
+    aria-label={`${slot.label}: ${player?.nombre??'Sin asignar'}`}
+    draggable={!!player}
+    onDragStart={e=>{e.dataTransfer.setData('text/plain',String(index));e.dataTransfer.effectAllowed='move'}}
+    onDragOver={e=>{e.preventDefault();e.dataTransfer.dropEffect='move'}}
+    onDrop={e=>{e.preventDefault();const from=Number(e.dataTransfer.getData('text/plain'));if(Number.isInteger(from)&&index!==undefined)onMove?.(from,index)}}
+
     style={{
       position: 'absolute',
       left: `${slot.x}%`,
@@ -237,7 +246,7 @@ const PitchSlot: React.FC<SlotProps> = ({ slot, player, onClick, gameType, accen
       maxWidth: '70px', textAlign: 'center',
       whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
     }}>
-      {player ? player.nombre.split(' ')[0] : slot.label}
+      {slot.label} {player ? `· ${player.nombre}` : ''}
     </div>
   </button>
 );
@@ -379,557 +388,176 @@ const PlayerSelectorModal: React.FC<SelectorProps> = ({ players, selected, onSel
 
 // ─── Página principal ─────────────────────────────────────────────────────────
 
-const TeamBuilderPage: React.FC = () => {
-  const { user } = useAuth();
 
-  // Sección del juego
-  const [gameType, setGameType] = useState<GameType>('FIFA');
-  // Modo: Mi equipo (comprados) o potencial (todos)
-  const [teamMode, setTeamMode] = useState<TeamMode>('MI_EQUIPO');
-  // Formación seleccionada
-  const [formationKey, setFormationKey] = useState('4-3-3');
-
-  // Slots ocupados: índice → jugador
-  const [lineup, setLineup] = useState<Record<number, AnyPlayer | null>>({});
-
-  // Modal: qué slot está abierto
-  const [openSlot, setOpenSlot] = useState<number | null>(null);
-
-  // Listas de jugadores disponibles
-  const [allFifa, setAllFifa] = useState<Player[]>([]);
-  const [allEfootball, setAllEfootball] = useState<Jugador[]>([]);
-  const [myFifa, setMyFifa] = useState<Player[]>([]);
-  const [myEfootball, setMyEfootball] = useState<Jugador[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Cargar datos
-  useEffect(() => {
-    const load = async () => {
-      setIsLoading(true);
-      try {
-        // Todos los jugadores
-        const [fifaPage, efPage] = await Promise.all([
-          allFifaPlayers(),
-          allEfootballPlayers(),
-        ]);
-        setAllFifa(fifaPage);
-        setAllEfootball(efPage);
-
-        // Jugadores comprados
-        const purchases = await purchasesApi.getPurchases();
-        const boughtIds = new Set(purchases.flatMap(p => p.players.filter(pl => pl.gameType !== 'EFOOTBALL').map(pl => pl.id)));
-        setMyFifa(fifaPage.filter(p => boughtIds.has(p.id)));
-
-        // Solo jugadores eFootball conservados en el detalle de compra.
-        const efBought = new Set(purchases.flatMap(p => p.players.filter(pl => pl.gameType === 'EFOOTBALL').map(pl => pl.id)));
-        setMyEfootball(efPage.filter(p => efBought.has(p.id)));
-      } catch {
-        toast.error('No se pudieron cargar los jugadores. Recarga cuando el servidor esté disponible.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    load();
-  }, []);
-
-  // Modal para guardar en favoritos
-  const [showSaveModal, setShowSaveModal] = useState(false);
-  const [lineupName, setLineupName] = useState('');
-
-  // Alineaciones guardadas en localStorage
-  const storageKey = `caza_saved_lineups_${user?.id || 'guest'}`;
-  const [savedLineups, setSavedLineups] = useState<SavedLineup[]>(() => {
-    try {
-      const stored = localStorage.getItem(storageKey);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  // Guardar en localStorage cuando cambien las alineaciones guardadas
-  const persistSavedLineups = (newList: SavedLineup[]) => {
-    setSavedLineups(newList);
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(newList));
-    } catch {
-      // ignore
-    }
-  };
-
-  const handleSaveLineup = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!lineupName.trim()) {
-      toast.error('Ingresa un nombre para tu equipo');
-      return;
-    }
-
-    const filledLineup: Record<number, AnyPlayer> = {};
-    Object.entries(lineup).forEach(([idx, player]) => {
-      if (player) filledLineup[Number(idx)] = player;
-    });
-
-    if (Object.keys(filledLineup).length === 0) {
-      toast.error('Asigna al menos un jugador antes de guardar');
-      return;
-    }
-
-    const newSaved: SavedLineup = {
-      id: Date.now().toString(),
-      name: lineupName.trim(),
-      gameType,
-      teamMode,
-      formationKey,
-      date: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }),
-      lineup: filledLineup,
-    };
-
-    persistSavedLineups([newSaved, ...savedLineups]);
-    setLineupName('');
-    setShowSaveModal(false);
-    toast.success(`⭐ ¡Alineación "${newSaved.name}" guardada en favoritos!`);
-  };
-
-  const handleLoadSavedLineup = (saved: SavedLineup) => {
-    setGameType(saved.gameType);
-    setTeamMode(saved.teamMode);
-    setFormationKey(saved.formationKey);
-    const catalogue: AnyPlayer[] = saved.gameType === 'FIFA' ? allFifa : allEfootball;
-    setLineup(Object.fromEntries(Object.entries(saved.lineup).map(([slot, player]) =>
-      [slot, catalogue.find(current => current.id === player.id) ?? player])));
-    toast.success(`🎮 Alineación "${saved.name}" cargada`);
-  };
-
-  const handleDeleteSavedLineup = (id: string, name: string) => {
-    const filtered = savedLineups.filter(s => s.id !== id);
-    persistSavedLineups(filtered);
-    toast.success(`Alineación "${name}" eliminada`);
-  };
-
-  // Al cambiar juego o modo, limpiar alineación
-  const handleChangeGame = (gt: GameType) => {
-    setGameType(gt);
-    setLineup({});
-  };
-  const handleChangeMode = (m: TeamMode) => {
-    setTeamMode(m);
-    setLineup({});
-  };
-  const handleChangeFormation = (f: string) => {
-    setFormationKey(f);
-    setLineup({});
-  };
-
-  const formation = FORMATIONS[formationKey];
-  const accentColor = gameType === 'FIFA' ? '#6C63FF' : '#FF8C00';
-
-  // Pool de jugadores según modo y juego
-  const playerPool: AnyPlayer[] = (() => {
-    if (gameType === 'FIFA')
-      return teamMode === 'MI_EQUIPO' ? myFifa : allFifa;
-    return teamMode === 'MI_EQUIPO' ? myEfootball : allEfootball;
-  })();
-
-  // Jugadores ya en la alineación
-  const usedIds = new Set(
-    Object.values(lineup).filter(Boolean).map(p => p!.id)
-  );
-  // Disponibles = pool sin los ya usados (salvo el que está en el slot abierto)
-  const available = playerPool.filter(p =>
-    !usedIds.has(p.id) || (openSlot !== null && lineup[openSlot]?.id === p.id)
-  );
-
-  const countFilled = formation.slots.filter((_, i) => lineup[i]).length;
-
-  if (isLoading) return (
-    <Layout>
-      <div className="flex justify-center py-20"><LoadingSpinner size="lg" /></div>
-    </Layout>
-  );
-
-  return (
-    <Layout>
-      {user && <LineupTransfer userId={user.id} storageKey={storageKey} formations={Object.keys(FORMATIONS)} />}
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-3xl font-black text-white">Armar Equipo ⚽</h1>
-          <p className="text-gray-400 text-sm mt-1">Diseña tu alineación ideal táctica y guárdala en tus favoritos</p>
-        </div>
-
-        {/* Botón Guardar en Favoritos */}
-        <button
-          onClick={() => {
-            if (countFilled === 0) {
-              toast.error('Agrega al menos un jugador a la alineación antes de guardar');
-              return;
-            }
-            setShowSaveModal(true);
-          }}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-white text-sm transition-all duration-200 hover:opacity-90 hover:scale-105 flex-shrink-0"
-          style={{
-            background: 'linear-gradient(135deg, #f59e0b, #facc15)',
-            color: '#000',
-            boxShadow: '0 4px 20px rgba(245, 158, 11, 0.25)',
-          }}
-        >
-          <Star className="w-4 h-4 fill-black" />
-          Guardar en Favoritos
-        </button>
-      </div>
-
-      {/* Mis Equipos Guardados en Favoritos */}
-      {savedLineups.length > 0 && (
-        <div className="glass-card p-5 mb-6" style={{ border: '1px solid rgba(245, 158, 11, 0.25)', background: 'rgba(245, 158, 11, 0.03)' }}>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-bold text-amber-400 flex items-center gap-2 uppercase tracking-wide">
-              <Bookmark className="w-4 h-4" /> Mis Equipos Guardados ({savedLineups.length})
-            </h3>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {savedLineups.map((saved) => {
-              const count = Object.values(saved.lineup).filter(Boolean).length;
-              return (
-                <div
-                  key={saved.id}
-                  className="p-3.5 rounded-xl flex items-center justify-between gap-3 transition-all"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-white font-bold text-sm truncate">{saved.name}</p>
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-black" style={{ background: saved.gameType === 'FIFA' ? 'rgba(108,99,255,0.2)' : 'rgba(255,140,0,0.2)', color: saved.gameType === 'FIFA' ? '#a78bfa' : '#FB923C' }}>
-                        {saved.gameType}
-                      </span>
-                    </div>
-                    <p className="text-gray-400 text-xs mt-0.5">
-                      {saved.formationKey} · {count}/11 Jugadores · <span className="text-gray-500">{saved.date}</span>
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <button
-                      onClick={() => handleLoadSavedLineup(saved)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-bold text-black transition-all hover:opacity-90"
-                      style={{ background: 'linear-gradient(135deg, #43E97B, #38BDF8)' }}
-                    >
-                      Cargar
-                    </button>
-                    <button
-                      onClick={() => handleDeleteSavedLineup(saved.id, saved.name)}
-                      className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                      title="Eliminar"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Tabs: Mi equipo / Potencial */}
-      <div
-        className="flex rounded-xl p-1 mb-5 gap-1 w-fit"
-        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
-      >
-        {(['MI_EQUIPO', 'POTENCIAL'] as TeamMode[]).map(mode => (
-          <button
-            key={mode}
-            onClick={() => handleChangeMode(mode)}
-            className="px-5 py-2 rounded-lg text-sm font-bold transition-all"
-            style={
-              teamMode === mode
-                ? { background: `${accentColor}22`, color: accentColor, border: `1px solid ${accentColor}40` }
-                : { color: '#9ca3af' }
-            }
-          >
-            {mode === 'MI_EQUIPO' ? '🏆 Mi Equipo' : '✨ Equipo Potencial'}
-          </button>
-        ))}
-      </div>
-
-      {/* Tabs: FIFA / eFootball */}
-      <div
-        className="flex rounded-xl p-1 mb-6 gap-1 w-fit"
-        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
-      >
-        <button
-          onClick={() => handleChangeGame('FIFA')}
-          className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-bold transition-all"
-          style={gameType === 'FIFA'
-            ? { background: 'rgba(108,99,255,0.2)', color: '#a78bfa', border: '1px solid rgba(108,99,255,0.4)' }
-            : { color: '#9ca3af' }}
-        >
-          <Users className="w-4 h-4" /> ⚽ FIFA
-        </button>
-        <button
-          onClick={() => handleChangeGame('EFOOTBALL')}
-          className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-bold transition-all"
-          style={gameType === 'EFOOTBALL'
-            ? { background: 'rgba(255,140,0,0.2)', color: '#FB923C', border: '1px solid rgba(255,140,0,0.4)' }
-            : { color: '#9ca3af' }}
-        >
-          <Gamepad2 className="w-4 h-4" /> 🎮 eFootball
-        </button>
-      </div>
-
-      {teamMode === 'MI_EQUIPO' && playerPool.length === 0 && (
-        <div className="glass-card p-8 text-center mb-6" style={{ border: `1px solid ${accentColor}20` }}>
-          <Trophy className="w-12 h-12 mx-auto mb-3 text-gray-600" />
-          <p className="text-white font-bold text-lg">No tienes jugadores de {gameType === 'FIFA' ? '⚽ FIFA' : '🎮 eFootball'} comprados aún</p>
-          <p className="text-gray-400 text-sm mt-1">Cambia a "Equipo Potencial" para probar con todos o compra jugadores en el Mercado</p>
-        </div>
-      )}
-
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Left: Config */}
-        <div className="space-y-4">
-          {/* Formación */}
-          <div className="glass-card p-5" style={{ border: `1px solid ${accentColor}20` }}>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-              <span style={{ color: accentColor }}>⬛</span> Formación ({Object.keys(FORMATIONS).length} disponibles)
-            </p>
-            <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-1">
-              {Object.keys(FORMATIONS).map(f => (
-                <button
-                  key={f}
-                  onClick={() => handleChangeFormation(f)}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all"
-                  style={
-                    formationKey === f
-                      ? { background: `${accentColor}25`, color: accentColor, border: `1px solid ${accentColor}50` }
-                      : { background: 'rgba(255,255,255,0.05)', color: '#9ca3af', border: '1px solid rgba(255,255,255,0.08)' }
-                  }
-                >
-                  {f}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Progreso */}
-          <div className="glass-card p-5" style={{ border: `1px solid ${accentColor}20` }}>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">📊 Progreso</p>
-            <div className="flex items-center gap-3 mb-3">
-              <div className="flex-1 h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
-                <div
-                  className="h-2 rounded-full transition-all duration-500"
-                  style={{ width: `${(countFilled / 11) * 100}%`, background: `linear-gradient(90deg, ${accentColor}, ${accentColor}aa)` }}
-                />
-              </div>
-              <span className="text-white font-black text-sm">{countFilled}/11</span>
-            </div>
-            <p className="text-gray-500 text-xs">{11 - countFilled} posiciones libres</p>
-          </div>
-
-          {/* Alineación (lista) */}
-          <div className="glass-card p-5" style={{ border: `1px solid ${accentColor}20` }}>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">🗒️ Alineación</p>
-            <div className="space-y-2">
-              {formation.slots.map((slot, i) => {
-                const p = lineup[i];
-                return (
-                  <div
-                    key={i}
-                    className="flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-all"
-                    style={{
-                      background: p ? `${accentColor}10` : 'rgba(255,255,255,0.03)',
-                      border: p ? `1px solid ${accentColor}25` : '1px solid rgba(255,255,255,0.05)',
-                    }}
-                    onClick={() => setOpenSlot(i)}
-                  >
-                    <span className="text-xs font-black w-8 text-center flex-shrink-0" style={{ color: accentColor }}>{slot.label}</span>
-                    {p ? (
-                      <>
-                        <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0" style={{ background: `${accentColor}30` }}>
-                          {p.imagenUrl
-                            ? <img src={p.imagenUrl} className="w-full h-full object-cover" alt="" />
-                            : <span className="w-full h-full flex items-center justify-center text-xs font-bold text-white">{p.nombre.charAt(0)}</span>}
-                        </div>
-                        <span className="text-white text-xs font-bold flex-1 truncate">{p.nombre}</span>
-                        <button
-                          onClick={e => { e.stopPropagation(); setLineup(l => ({ ...l, [i]: null })); }}
-                          className="text-gray-600 hover:text-red-400 transition-colors flex-shrink-0"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </>
-                    ) : (
-                      <span className="text-gray-600 text-xs flex-1">Sin asignar</span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Reset */}
-            {countFilled > 0 && (
-              <button
-                onClick={() => setLineup({})}
-                className="w-full mt-4 py-2 rounded-xl text-xs font-bold text-red-400 hover:bg-red-500/10 transition-all"
-                style={{ border: '1px solid rgba(239,68,68,0.2)' }}
-              >
-                Limpiar alineación
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Right: Campo de fútbol */}
-        <div className="lg:col-span-2">
-          <div
-            className="relative w-full rounded-2xl overflow-hidden"
-            style={{
-              aspectRatio: '2/3',
-              background: 'linear-gradient(180deg, #1a5c1a 0%, #1e6e1e 50%, #1a5c1a 100%)',
-              border: `2px solid ${accentColor}30`,
-              boxShadow: `0 0 40px ${accentColor}15`,
-            }}
-          >
-            {/* Líneas del campo */}
-            <svg
-              viewBox="0 0 100 150"
-              preserveAspectRatio="none"
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.35 }}
-            >
-              {/* Borde exterior */}
-              <rect x="5" y="5" width="90" height="140" fill="none" stroke="white" strokeWidth="0.8" />
-              {/* Línea del medio */}
-              <line x1="5" y1="75" x2="95" y2="75" stroke="white" strokeWidth="0.6" />
-              {/* Círculo central */}
-              <circle cx="50" cy="75" r="12" fill="none" stroke="white" strokeWidth="0.6" />
-              <circle cx="50" cy="75" r="1" fill="white" />
-              {/* Área grande abajo */}
-              <rect x="22" y="112" width="56" height="28" fill="none" stroke="white" strokeWidth="0.6" />
-              {/* Área pequeña abajo */}
-              <rect x="35" y="126" width="30" height="14" fill="none" stroke="white" strokeWidth="0.6" />
-              {/* Portería abajo */}
-              <rect x="42" y="140" width="16" height="5" fill="none" stroke="white" strokeWidth="0.6" />
-              {/* Área grande arriba */}
-              <rect x="22" y="10" width="56" height="28" fill="none" stroke="white" strokeWidth="0.6" />
-              {/* Área pequeña arriba */}
-              <rect x="35" y="10" width="30" height="14" fill="none" stroke="white" strokeWidth="0.6" />
-              {/* Portería arriba */}
-              <rect x="42" y="5" width="16" height="5" fill="none" stroke="white" strokeWidth="0.6" />
-              {/* Punto penal abajo */}
-              <circle cx="50" cy="124" r="0.8" fill="white" />
-              {/* Punto penal arriba */}
-              <circle cx="50" cy="26" r="0.8" fill="white" />
-            </svg>
-
-            {/* Nombre de la formación */}
-            <div style={{
-              position: 'absolute', top: '8px', left: '50%', transform: 'translateX(-50%)',
-              background: 'rgba(0,0,0,0.6)', borderRadius: '20px', padding: '4px 14px',
-              color: '#fff', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.05em',
-              backdropFilter: 'blur(4px)', zIndex: 3,
-            }}>
-              {formation.name}
-            </div>
-
-            {/* Slots de jugadores */}
-            {formation.slots.map((slot, i) => (
-              <PitchSlot
-                key={i}
-                slot={slot}
-                player={lineup[i] ?? null}
-                onClick={() => setOpenSlot(i)}
-                gameType={gameType}
-                accentColor={accentColor}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Modal selector */}
-      {openSlot !== null && (
-        <PlayerSelectorModal
-          players={available}
-          selected={lineup[openSlot] ?? null}
-          onSelect={p => setLineup(l => ({ ...l, [openSlot]: p }))}
-          onClose={() => setOpenSlot(null)}
-          slotLabel={formation.slots[openSlot].label}
-          accentColor={accentColor}
-          gameType={gameType}
-        />
-      )}
-
-      {/* Modal Guardar en Favoritos */}
-      {showSaveModal && (
-        <div
-          style={{
-            position: 'fixed', inset: 0, zIndex: 110,
-            background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem',
-          }}
-          onClick={(e) => { if (e.target === e.currentTarget) setShowSaveModal(false); }}
-        >
-          <div style={{
-            width: '100%', maxWidth: '400px',
-            background: '#12122A', borderRadius: '20px',
-            border: '1px solid rgba(245, 158, 11, 0.3)',
-            padding: '1.8rem',
-            boxShadow: '0 0 50px rgba(245, 158, 11, 0.15)',
-          }}>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2 text-amber-400 font-black text-lg">
-                <Star className="w-5 h-5 fill-amber-400" />
-                <span>Guardar en Favoritos</span>
-              </div>
-              <button onClick={() => setShowSaveModal(false)} className="text-gray-400 hover:text-white">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveLineup} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1.5">
-                  Nombre de la Alineación / Equipo
-                </label>
-                <input
-                  type="text"
-                  required
-                  autoFocus
-                  placeholder="Ej: Mi XI Titular FIFA"
-                  value={lineupName}
-                  onChange={e => setLineupName(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl text-sm text-white outline-none"
-                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)' }}
-                />
-              </div>
-
-              <div className="text-xs text-gray-400 space-y-1 bg-white/5 p-3 rounded-xl">
-                <p><strong>Formación:</strong> {formationKey}</p>
-                <p><strong>Modalidad:</strong> {teamMode === 'MI_EQUIPO' ? 'Mi Equipo' : 'Equipo Potencial'} ({gameType})</p>
-                <p><strong>Jugadores:</strong> {countFilled}/11 asignados</p>
-              </div>
-
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="submit"
-                  className="flex-1 py-2.5 rounded-xl font-bold text-black text-sm flex items-center justify-center gap-2 transition-all hover:opacity-90"
-                  style={{ background: 'linear-gradient(135deg, #f59e0b, #facc15)' }}
-                >
-                  <Save className="w-4 h-4" /> Guardar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowSaveModal(false)}
-                  className="px-4 py-2.5 rounded-xl font-semibold text-gray-300 text-sm bg-white/5 hover:bg-white/10"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </Layout>
-  );
+type Draft={name:string;gameType:GameType;teamMode:TeamMode;formationKey:string;lineup:Record<number,AnyPlayer>;legacyId?:string};
+type CloudLineup={id:string;name:string;payload:string;version:number;updatedAt:string};
+const emptyDraft=():Draft=>({name:'Mi alineación',gameType:'FIFA',teamMode:'POTENCIAL',formationKey:'4-3-3',lineup:{}});
+const validDraft=(d:Draft)=> d && ['FIFA','EFOOTBALL'].includes(d.gameType) &&
+ ['MI_EQUIPO','POTENCIAL'].includes(d.teamMode) && !!FORMATIONS[d.formationKey] && d.lineup && typeof d.lineup==='object' &&
+ Object.entries(d.lineup).length<=23 && Object.entries(d.lineup).every(([i,p])=>
+ Number.isInteger(Number(i))&&Number(i)>=0&&Number(i)<23&&p&&Number.isInteger(p.id)&&p.id>0&&typeof p.nombre==='string') &&
+ new Set(Object.values(d.lineup).map(p=>p.id)).size===Object.values(d.lineup).length;
+const TeamBuilderPage: React.FC=()=>{
+ const {user}=useAuth();
+ const [draft,setDraft]=useState<Draft>(emptyDraft);
+ const [id,setId]=useState(()=>crypto.randomUUID());
+ const [version,setVersion]=useState<number|null>(null);
+ const [saved,setSaved]=useState<CloudLineup[]>([]);
+ const [last,setLast]=useState('');
+ const [dirty,setDirty]=useState(false),[saving,setSaving]=useState(false),[ready,setReady]=useState(false);
+ const [error,setError]=useState(''),[conflict,setConflict]=useState(false);
+ const [allFifa,setAllFifa]=useState<Player[]>([]),[allEf,setAllEf]=useState<Jugador[]>([]);
+ const [owned,setOwned]=useState<Set<string>>(new Set());
+ const [openSlot,setOpenSlot]=useState<number|null>(null),[moveFrom,setMoveFrom]=useState<number|null>(null);
+ const [query,setQuery]=useState('');const inFlight=useRef(false);
+ const snapshot=JSON.stringify(draft);
+ const apply=(row:CloudLineup)=>{
+  const d=JSON.parse(row.payload) as Draft;if(!validDraft(d))throw new Error('Alineación inválida');
+  setDraft(d);setId(row.id as ReturnType<typeof crypto.randomUUID>);setVersion(row.version);
+  setLast(JSON.stringify(d));setDirty(false);setConflict(false);setError('');setMoveFrom(null);
+ };
+ const load=async()=>{
+  setError('');setReady(false);
+  try{
+   const [f,e,p,r]=await Promise.all([allFifaPlayers(),allEfootballPlayers(),purchasesApi.getPurchases(),api.get('/lineups')]);
+   setAllFifa(f);setAllEf(e);
+   setOwned(new Set(p.flatMap(x=>x.players.map(pl=>`${pl.gameType??'FIFA'}:${pl.id}`))));
+   const rows=r.data.data as CloudLineup[];setSaved(rows);
+   if(rows.length)apply(rows[0]);
+   setReady(true);
+  }catch{setError('No se pudieron cargar tus equipos. Reintenta antes de editar.');}
+ };
+ useEffect(()=>{load()},[user?.id]);
+ // A single in-flight request. Edits made during a save are sent afterwards using the new version.
+ useEffect(()=>{
+  if(!ready||!dirty||saving||conflict||error||snapshot===last)return;
+  const timer=setTimeout(async()=>{
+   if(inFlight.current)return;
+   if(!draft.name.trim()){setError('Escribe un nombre para guardar la alineación.');return;}
+   inFlight.current=true;setSaving(true);
+   try{
+    const result=await api.put(`/lineups/${id}`,{name:draft.name,payload:snapshot,version});
+    const row=result.data.data as CloudLineup;
+    setVersion(row.version);setLast(snapshot);
+    setSaved(list=>[row,...list.filter(r=>r.id!==row.id)]);
+   }catch(e:any){
+    if(e?.response?.status===409)setConflict(true);
+    setError(e?.response?.data?.message||'No se pudo guardar. Tus cambios siguen en esta pantalla.');
+   }finally{inFlight.current=false;setSaving(false);}
+  },900);
+  return()=>clearTimeout(timer);
+ },[snapshot,ready,dirty,saving,conflict,error,last,id,version]);
+ const pending=dirty&&snapshot!==last;
+ useEffect(()=>{
+  const before=(e:BeforeUnloadEvent)=>{if(pending||saving){e.preventDefault();e.returnValue='';}};
+  const navigate=(e:MouseEvent)=>{const a=(e.target as HTMLElement).closest('a');if(a&&(pending||saving)&&!confirm('Hay cambios sin guardar. ¿Salir de esta página?')){e.preventDefault();e.stopPropagation();}};
+  window.addEventListener('beforeunload',before);document.addEventListener('click',navigate,true);
+  return()=>{window.removeEventListener('beforeunload',before);document.removeEventListener('click',navigate,true)};
+ },[pending,saving]);
+ const change=(next:Draft)=>{if(inFlight.current&&next.gameType!==draft.gameType)return;setDraft(next);setDirty(true);if(!conflict)setError('')};
+ const canLeave=()=>!inFlight.current&&(!pending||confirm('Tienes cambios sin guardar. ¿Continuar y descartarlos?'));
+ const newTeam=()=>{if(!canLeave())return;setDraft(emptyDraft());setId(crypto.randomUUID());setVersion(null);setLast('');setDirty(false);setConflict(false);setError('')};
+ const move=(from:number,to:number)=>{
+  if(from<0||from>22||to<0||to>22||!draft.lineup[from]||from===to)return;
+  const next={...draft.lineup};const other=next[to];next[to]=next[from];
+  if(other)next[from]=other;else delete next[from];
+  change({...draft,lineup:next});setMoveFrom(null);
+ };
+ const selectSlot=(i:number)=>{if(moveFrom!==null){move(moveFrom,i);return;}setOpenSlot(i)};
+ const assign=(p:AnyPlayer|null)=>{
+  if(openSlot===null)return;
+  const lineup={...draft.lineup};
+  if(p)lineup[openSlot]=p;else delete lineup[openSlot];
+  change({...draft,lineup});setOpenSlot(null);
+ };
+ const importLegacy=async()=>{
+  if(saving||!ready||pending){toast.error('Espera a que se guarde tu equipo actual.');return;}
+  setSaving(true);inFlight.current=true;
+  try{
+   const old=JSON.parse(localStorage.getItem(`caza_saved_lineups_${user?.id}`)||'[]');
+   let count=0;
+   for(const item of old){
+    if(saved.some(r=>JSON.parse(r.payload).legacyId===String(item.id)))continue;
+    const d={...item,legacyId:String(item.id)} as Draft;
+    if(!validDraft(d))throw new Error('Hay una alineación local inválida. Los originales no se modificaron.');
+    const response=await api.put(`/lineups/${crypto.randomUUID()}`,{name:d.name,payload:JSON.stringify(d),version:null});
+    setSaved(list=>[response.data.data,...list]);count++;
+   }
+   toast.success(`${count} equipos importados. Los originales locales se conservaron.`);
+  }catch(e:any){toast.error(e.message||'No se pudo completar la importación.');}
+  finally{inFlight.current=false;setSaving(false);}
+ };
+ const download=()=>{
+  const blob=new Blob([JSON.stringify(draft,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='CAZA-alineacion.json';a.click();URL.revokeObjectURL(url);
+ };
+ const pool:AnyPlayer[]=(draft.gameType==='FIFA'?allFifa:allEf).filter(p=>draft.teamMode==='POTENCIAL'||owned.has(`${draft.gameType}:${p.id}`));
+ const formation=FORMATIONS[draft.formationKey];
+ const color=draft.gameType==='FIFA'?'#a78bfa':'#fb923c';
+ const used=new Set(Object.values(draft.lineup).map(p=>p.id));
+ const available=pool.filter(p=>!used.has(p.id)||p.id===draft.lineup[openSlot??-1]?.id);
+ const status=saving?'Guardando…':error?'No se pudo guardar':pending?'Cambios pendientes…':last?'Guardado en la nube':'Elige jugadores para comenzar';
+ if(!ready)return <Layout><p role="status">{error||'Cargando tus equipos…'}</p>{error&&<button onClick={load} className="btn-primary mt-4">Reintentar</button>}</Layout>;
+ return <Layout>
+  <div className="flex flex-wrap justify-between gap-4 mb-6"><div><p className="text-xs uppercase tracking-widest text-purple-300 mb-2">CAZA / TÁCTICA</p><h1 className="text-3xl font-black">Tu equipo, tu estilo</h1><p role="status" className="text-sm mt-2 text-gray-400">{status}</p></div>
+   <div className="flex flex-wrap gap-3"><button className="btn-primary" disabled={saving} onClick={newTeam}>Nueva alineación</button>
+    <button className="text-purple-300" disabled={saving||pending} onClick={importLegacy}>Importar equipos de este navegador</button><button onClick={download}>Exportar equipo</button>
+    <label className="cursor-pointer text-purple-300">Importar archivo<input type="file" accept=".json" className="sr-only" onChange={async e=>{
+     const file=e.target.files?.[0];e.target.value='';if(!file||!canLeave())return;
+     try{if(file.size>100000)throw new Error();const d=JSON.parse(await file.text());if(!validDraft(d))throw new Error();setDraft(d);setId(crypto.randomUUID());setVersion(null);setLast('');setDirty(true);setConflict(false);setError('');}catch{toast.error('Archivo de alineación inválido.')}
+    }}/></label></div>
+  </div>
+  {error&&<div role="alert" className="glass-card p-4 border border-red-400 mb-5"><p>{error}</p><div className="flex gap-4 mt-3">
+   {!conflict&&<button onClick={()=>setError('')}>Reintentar guardado</button>}
+   <button disabled={saving} onClick={()=>{setId(crypto.randomUUID());setVersion(null);setLast('');setConflict(false);setError('');setDirty(true)}}>Guardar como copia nueva</button>
+   <button onClick={()=>{if(canLeave())load()}}>Recargar desde la nube</button></div></div>}
+  <div className="grid lg:grid-cols-[300px_1fr] gap-6">
+   <aside className="space-y-5">
+    <div className="glass-card p-5 space-y-4">
+     <label className="text-sm block">Nombre del equipo<input className="input-dark mt-2" maxLength={100} value={draft.name} onChange={e=>change({...draft,name:e.target.value})}/></label>
+     <label className="text-sm block">Juego<select className="input-dark mt-2" disabled={saving} value={draft.gameType} onChange={e=>{
+      if(Object.keys(draft.lineup).length&&!confirm('Cambiar de juego vaciará esta alineación. ¿Continuar?'))return;
+      change({...draft,gameType:e.target.value as GameType,lineup:{}});setMoveFrom(null);
+     }}><option>FIFA</option><option>EFOOTBALL</option></select></label>
+     <label className="text-sm block">Jugadores disponibles<select className="input-dark mt-2" value={draft.teamMode} onChange={e=>{
+      const mode=e.target.value as TeamMode;
+      if(mode==='MI_EQUIPO'&&Object.values(draft.lineup).some(p=>!owned.has(`${draft.gameType}:${p.id}`))){toast.error('Retira primero los jugadores que aún no has comprado.');return;}
+      change({...draft,teamMode:mode});
+     }}><option value="POTENCIAL">Equipo potencial</option><option value="MI_EQUIPO">Mis jugadores comprados</option></select></label>
+     <label className="text-sm block">Formación<select className="input-dark mt-2" value={draft.formationKey} onChange={e=>change({...draft,formationKey:e.target.value})}>{Object.keys(FORMATIONS).map(f=><option key={f}>{f}</option>)}</select></label>
+     <p className="text-xs text-gray-400">Cambiar formación conserva los once jugadores. Revisa sus posiciones.</p>
+    </div>
+    <div className="glass-card p-4"><h2 className="font-bold mb-3">Alineaciones guardadas</h2>{saved.map(row=><div key={row.id} className="flex gap-2 py-2 border-b border-white/5">
+     <button className="text-left flex-1 text-sm" disabled={saving} onClick={()=>{if(canLeave())apply(row)}}>{row.name}</button>
+     <button aria-label={`Eliminar ${row.name}`} disabled={saving} onClick={async()=>{
+      if(!canLeave()||!confirm(`¿Eliminar la alineación "${row.name}"?`))return;
+      setSaving(true);inFlight.current=true;
+      try{await api.delete(`/lineups/${row.id}`,{params:{version:row.version}});setSaved(list=>list.filter(r=>r.id!==row.id));if(id===row.id){setId(crypto.randomUUID());setVersion(null);setLast('');setDirty(false);setDraft(emptyDraft());}}
+      catch{toast.error('No se eliminó. Puede haber cambiado en otro dispositivo; recarga.');}finally{inFlight.current=false;setSaving(false)}
+     }}><Trash2 size={14}/></button>
+    </div>)}</div>
+    <div className="glass-card p-4"><h2 className="font-bold">Jugadores</h2><p className="text-xs text-gray-400 my-2">Toca una posición para elegir. Arrastra un jugador del campo o de suplentes para intercambiarlo.</p>
+     <input className="input-dark mb-3" placeholder="Buscar en tu catálogo" aria-label="Buscar en tu catálogo" value={query} onChange={e=>setQuery(e.target.value)}/>
+     <div className="max-h-64 overflow-auto">{pool.filter(p=>p.nombre.toLowerCase().includes(query.toLowerCase())&&!used.has(p.id)).slice(0,50).map(p=><button key={p.id} className="block text-left text-sm py-2 w-full hover:text-purple-300" onClick={()=>{
+      const free=Array.from({length:23},(_,i)=>i).find(i=>!draft.lineup[i]);if(free===undefined){toast.error('Equipo completo');return;}change({...draft,lineup:{...draft.lineup,[free]:p}});
+     }}>+ {p.nombre}</button>)}</div>
+    </div>
+   </aside>
+   <section><div className="flex justify-between items-center mb-3"><h2 className="font-bold">{draft.name} · {draft.formationKey}</h2><span className="text-gray-400 text-sm">{Object.keys(draft.lineup).filter(i=>Number(i)<11).length}/11</span></div>
+    <div className="pitch-modern relative rounded-3xl overflow-hidden" style={{aspectRatio:'2/3',maxHeight:850}}>
+     <svg viewBox="0 0 100 150" preserveAspectRatio="none" className="absolute inset-0 w-full h-full opacity-30" aria-hidden="true"><rect x="5" y="5" width="90" height="140" fill="none" stroke="white"/><path d="M5 75 H95 M25 5 V25 H75 V5 M25 145 V125 H75 V145" fill="none" stroke="white"/><circle cx="50" cy="75" r="12" fill="none" stroke="white"/></svg>
+     {formation.slots.map((slot,i)=><PitchSlot key={i} index={i} slot={slot} player={draft.lineup[i]??null} gameType={draft.gameType} accentColor={color} onMove={move} onClick={()=>selectSlot(i)}/>)}
+    </div>
+    <div className="glass-card p-4 mt-5"><h2 className="font-bold mb-3">Suplentes</h2><div className="grid grid-cols-3 sm:grid-cols-4 gap-3">{Array.from({length:12},(_,n)=>n+11).map(i=><button key={i}
+     draggable={!!draft.lineup[i]} onDragStart={e=>e.dataTransfer.setData('text/plain',String(i))} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();move(Number(e.dataTransfer.getData('text/plain')),i)}}
+     onClick={()=>selectSlot(i)} className="rounded-xl bg-white/5 p-3 text-xs hover:bg-white/10">S{i-10}<br/><span className="font-bold">{draft.lineup[i]?.nombre??'+ Elegir'}</span></button>)}</div></div>
+    <div className="glass-card p-4 mt-5"><h2 className="font-bold mb-3">Mover por toque o teclado</h2><p className="text-sm text-gray-400 mb-3">{moveFrom!==null?'Ahora toca la posición de destino o un suplente.':'Elige un jugador para moverlo; también puedes retirarlo.'}</p>
+     <div className="space-y-2">{Object.entries(draft.lineup).map(([i,p])=><div key={i} className="flex items-center gap-3 text-sm"><span className="flex-1">{Number(i)<11?formation.slots[Number(i)].label:`S${Number(i)-10}`} · {p.nombre}</span><button className="text-purple-300" onClick={()=>setMoveFrom(Number(i))}>Mover</button><button className="text-red-300" onClick={()=>{const lineup={...draft.lineup};delete lineup[Number(i)];change({...draft,lineup})}}>Retirar</button></div>)}</div>
+     {moveFrom!==null&&<button className="mt-3" onClick={()=>setMoveFrom(null)}>Cancelar movimiento</button>}
+    </div>
+   </section>
+  </div>
+  {openSlot!==null&&<PlayerSelectorModal players={available} selected={draft.lineup[openSlot]??null} onSelect={assign} onClose={()=>setOpenSlot(null)} slotLabel={openSlot<11?formation.slots[openSlot].label:`Suplente ${openSlot-10}`} accentColor={color} gameType={draft.gameType}/>}
+ </Layout>;
 };
-
 export default TeamBuilderPage;

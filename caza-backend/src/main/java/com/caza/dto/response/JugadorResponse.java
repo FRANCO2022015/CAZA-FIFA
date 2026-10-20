@@ -20,6 +20,7 @@ public class JugadorResponse {
     private Integer asistencias;
     private BigDecimal precio;
     private String imagenUrl;
+    private String hologramUrl;
     private Integer ga;
     private BigDecimal pg;
     private BigDecimal pa;

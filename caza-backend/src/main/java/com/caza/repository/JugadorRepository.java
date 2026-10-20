@@ -13,11 +13,14 @@ import java.math.BigDecimal;
 @Repository
 public interface JugadorRepository extends JpaRepository<Jugador, Long> {
 
+    Page<Jugador> findByActivoTrue(Pageable pageable);
+    java.util.Optional<Jugador> findByIdAndActivoTrue(Long id);
+
     Page<Jugador> findByNombreContainingIgnoreCase(String nombre, Pageable pageable);
 
     @Query("""
             SELECT j FROM Jugador j
-            WHERE (:nombre IS NULL OR LOWER(j.nombre) LIKE LOWER(CONCAT('%', CAST(:nombre AS string), '%')))
+            WHERE j.activo = true AND (:nombre IS NULL OR LOWER(j.nombre) LIKE LOWER(CONCAT('%', CAST(:nombre AS string), '%')))
             """)
     Page<Jugador> searchJugadores(
             @Param("nombre") String nombre,
@@ -26,7 +29,7 @@ public interface JugadorRepository extends JpaRepository<Jugador, Long> {
 
     @Query(value = """
             SELECT j FROM Jugador j
-            WHERE (:nombre      IS NULL OR LOWER(j.nombre) LIKE LOWER(CONCAT('%', CAST(:nombre AS string), '%')))
+            WHERE j.activo = true AND (:nombre      IS NULL OR LOWER(j.nombre) LIKE LOWER(CONCAT('%', CAST(:nombre AS string), '%')))
               AND (:minGoles     IS NULL OR j.goles       >= :minGoles)
               AND (:maxGoles     IS NULL OR j.goles       <= :maxGoles)
               AND (:minAsist     IS NULL OR j.asistencias >= :minAsist)
@@ -40,7 +43,7 @@ public interface JugadorRepository extends JpaRepository<Jugador, Long> {
             """,
             countQuery = """
             SELECT COUNT(j) FROM Jugador j
-            WHERE (:nombre      IS NULL OR LOWER(j.nombre) LIKE LOWER(CONCAT('%', CAST(:nombre AS string), '%')))
+            WHERE j.activo = true AND (:nombre      IS NULL OR LOWER(j.nombre) LIKE LOWER(CONCAT('%', CAST(:nombre AS string), '%')))
               AND (:minGoles     IS NULL OR j.goles       >= :minGoles)
               AND (:maxGoles     IS NULL OR j.goles       <= :maxGoles)
               AND (:minAsist     IS NULL OR j.asistencias >= :minAsist)

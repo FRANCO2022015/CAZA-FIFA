@@ -47,7 +47,7 @@ public class CartServiceImpl implements CartService {
 
         if (request.jugadorId() != null) {
             // ── eFootball jugador ──────────────────────────────────────────
-            Jugador jugador = jugadorRepository.findById(request.jugadorId())
+            Jugador jugador = jugadorRepository.findByIdAndActivoTrue(request.jugadorId())
                     .orElseThrow(() -> new ResourceNotFoundException("Jugador", "id", request.jugadorId()));
 
             Optional<CartItem> existing = cartItemRepository.findByUserIdAndJugadorId(userId, request.jugadorId());
@@ -66,7 +66,7 @@ public class CartServiceImpl implements CartService {
             }
         } else {
             // ── FIFA player ────────────────────────────────────────────────
-            Player player = playerRepository.findById(request.playerId())
+            Player player = playerRepository.findByIdAndActivoTrue(request.playerId())
                     .orElseThrow(() -> new ResourceNotFoundException("Player", "id", request.playerId()));
 
             Optional<CartItem> existing = cartItemRepository.findByUserIdAndPlayerId(userId, request.playerId());
@@ -150,8 +150,9 @@ public class CartServiceImpl implements CartService {
                     .posicion(null)
                     .edad(0)
                     .precio(precio)
-                    .imagenUrl(null)
-                    .activo(true)
+                    .imagenUrl(j.getImagenUrl())
+                    .gameType("EFOOTBALL")
+                    .activo(j.getActivo())
                     .build();
 
             return CartItemResponse.builder()

@@ -174,7 +174,7 @@ const JugadorCard: React.FC<JugadorCardProps> = ({ jugador, onEdit, onDelete }) 
             Actualizar Stats
           </button>
 
-          {/* Eliminar — solo admin */}
+          {/* Archivar — solo admin */}
           {isAdmin && (
             <button
               onClick={() => onDelete?.(jugador.id)}

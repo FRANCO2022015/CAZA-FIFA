@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Upload, X, ImageIcon, Loader2, CheckCircle2 } from 'lucide-react';
 import { uploadPlayerImage } from '../../api/upload';
 
@@ -11,6 +11,7 @@ interface ImageUploaderProps {
   onClear?: () => void;
   /** Color de acento del borde/botón (hex) */
   accentColor?: string;
+  onBusyChange?: (busy:boolean)=>void;
 }
 
 const MAX_MB = 10;
@@ -21,12 +22,15 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   onUploaded,
   onClear,
   accentColor = '#6C63FF',
+  onBusyChange,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(currentUrl ?? null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  useEffect(()=>{setPreview(currentUrl??null);setSuccess(false);},[currentUrl]);
 
   // Drag & drop state
   const [dragging, setDragging] = useState(false);
@@ -50,6 +54,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     reader.readAsDataURL(file);
 
     setLoading(true);
+    onBusyChange?.(true);
     try {
       const url = await uploadPlayerImage(file);
       onUploaded(url);
@@ -59,6 +64,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       setPreview(currentUrl ?? null);
     } finally {
       setLoading(false);
+      onBusyChange?.(false);
     }
   };
 

@@ -55,9 +55,15 @@ public class PlayerServiceImpl implements PlayerService {
                 .edad(request.edad())
                 .precio(request.precio())
                 .imagenUrl(request.imagenUrl())
+                .hologramUrl(request.hologramUrl())
                 .activo(true)
                 .build();
         Player saved = playerRepository.save(player);
+        if (request.initialStats() != null) {
+            var s = request.initialStats();
+            playerStatsRepository.save(PlayerStats.builder().player(saved).temporada(s.temporada())
+                .goles(s.goles()).asistencias(s.asistencias()).partidosJugados(s.partidosJugados()).build());
+        }
         log.info("Player created: {} (id={})", saved.getNombre(), saved.getId());
         return mapToResponse(saved);
     }
@@ -67,6 +73,7 @@ public class PlayerServiceImpl implements PlayerService {
         Player player = playerRepository.findByIdAndActivoTrue(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Player", "id", id));
 
+        if (request.hologramUrl() != null) player.setHologramUrl(request.hologramUrl());
         player.setNombre(request.nombre());
         player.setNacionalidad(request.nacionalidad());
         player.setPosicion(request.posicion());
@@ -165,6 +172,7 @@ public class PlayerServiceImpl implements PlayerService {
                 .edad(player.getEdad())
                 .precio(player.getPrecio())
                 .imagenUrl(player.getImagenUrl())
+                .hologramUrl(player.getHologramUrl())
                 .activo(player.getActivo())
                 .stats(statsResponses)
                 .build();

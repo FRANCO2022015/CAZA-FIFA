@@ -25,5 +25,10 @@ public record PlayerRequest(
         @DecimalMax(value = "500.0", inclusive = true, message = "El precio máximo para jugadores FIFA es 500")
         BigDecimal precio,
 
-        String imagenUrl
+        String imagenUrl,
+
+        @Size(max = 500)
+        @Pattern(regexp = "^$|^https://[^\\s]+$|^http://(?:127\\.0\\.0\\.1|localhost)(?::[0-9]+)?/[^\\s]*$", message = "Usa una URL HTTPS para el recorte")
+        String hologramUrl,
+        @jakarta.validation.Valid PlayerStatsRequest initialStats
 ) {}

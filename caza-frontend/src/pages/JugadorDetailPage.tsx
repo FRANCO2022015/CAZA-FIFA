@@ -1,3 +1,5 @@
+import PlayerHologram from '../components/players/PlayerHologram';
+import PlayerStatsChart from '../components/players/PlayerStatsChart';
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -91,22 +93,7 @@ const JugadorDetailPage: React.FC = () => {
           <div className="glass-card p-6 flex flex-col items-center"
                style={{ border: '1px solid rgba(255,140,0,0.2)' }}>
 
-            {/* Avatar / foto */}
-            <div
-              className="w-48 h-48 rounded-2xl flex items-center justify-center mb-6 overflow-hidden"
-              style={{ background: 'linear-gradient(135deg, rgba(255,140,0,0.25), rgba(255,69,0,0.15))' }}
-            >
-              {jugador.imagenUrl ? (
-                <img
-                  src={jugador.imagenUrl}
-                  alt={jugador.nombre}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <Gamepad2 className="w-20 h-20 text-orange-400 opacity-60" />
-              )}
-            </div>
-
+            <PlayerHologram name={jugador.nombre} image={jugador.imagenUrl} cutout={jugador.hologramUrl} game="EFOOTBALL" />
             {/* Badge eFootball */}
             <span
               className="px-3 py-1 rounded-xl text-sm font-bold mb-4"
@@ -158,19 +145,7 @@ const JugadorDetailPage: React.FC = () => {
             </h1>
 
             {/* Estadísticas principales */}
-            <div className="grid grid-cols-3 gap-4 mt-4">
-              {statItems.map(({ icon, label, value }) => (
-                <div
-                  key={label}
-                  className="flex flex-col items-center py-4 rounded-xl"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
-                >
-                  <div className="flex items-center gap-2 mb-1">{icon}</div>
-                  <div className="text-3xl font-black text-white">{value}</div>
-                  <div className="text-xs text-gray-400 mt-1">{label}</div>
-                </div>
-              ))}
-            </div>
+            <PlayerStatsChart goles={jugador.goles} asistencias={jugador.asistencias} partidos={jugador.partidos} />
           </div>
 
           {/* Métricas avanzadas */}

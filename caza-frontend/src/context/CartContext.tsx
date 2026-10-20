@@ -6,6 +6,7 @@ import { useAuthContext } from './AuthContext';
 interface CartContextType {
   cart: CartSummary | null;
   isLoading: boolean;
+  error: string;
   fetchCart: () => Promise<void>;
   addToCart: (playerId: number, cantidad?: number) => Promise<void>;
   addJugadorToCart: (jugadorId: number, cantidad?: number) => Promise<void>;
@@ -21,14 +22,17 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [cart, setCart] = useState<CartSummary | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  const [error,setError]=useState("");
+
   const fetchCart = useCallback(async () => {
     if (!isAuthenticated) return;
     try {
       setIsLoading(true);
+      setError("");
       const data = await cartApi.getCart();
       setCart(data);
     } catch {
-      setCart(null);
+      setError("No se pudo cargar el carrito. Reintenta cuando el servidor esté disponible.");
     } finally {
       setIsLoading(false);
     }
@@ -64,7 +68,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   return (
-    <CartContext.Provider value={{ cart, isLoading, fetchCart, addToCart, addJugadorToCart, updateItem, removeItem, clearCart }}>
+    <CartContext.Provider value={{ cart, isLoading, error, fetchCart, addToCart, addJugadorToCart, updateItem, removeItem, clearCart }}>
       {children}
     </CartContext.Provider>
   );

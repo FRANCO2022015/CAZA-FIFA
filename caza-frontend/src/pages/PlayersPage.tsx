@@ -220,24 +220,24 @@ const PlayersPage: React.FC = () => {
   // ─── Eliminar ─────────────────────────────────────────────────────────────
 
   const handleDeleteFifa = async (id: number) => {
-    if (!window.confirm('¿Eliminar este jugador FIFA?')) return;
+    if (!window.confirm('¿Archivar este jugador FIFA?')) return;
     try {
       await playersApi.delete(id);
-      toast.success('Jugador eliminado');
+      toast.success('Jugador archivado');
       fetchPlayers(fifaPage, 12, fifaSortBy, fifaSortDir);
     } catch {
-      toast.error('Error al eliminar el jugador');
+      toast.error('Error al archivar el jugador');
     }
   };
 
   const handleDeleteJugador = async (id: number) => {
-    if (!window.confirm('¿Eliminar este jugador eFootball?')) return;
+    if (!window.confirm('¿Archivar este jugador eFootball?')) return;
     try {
       await jugadoresApi.delete(id);
-      toast.success('Jugador eliminado');
+      toast.success('Jugador archivado');
       fetchJugadores(efootballPage, 12, efSortBy, efSortDir);
     } catch {
-      toast.error('Error al eliminar el jugador');
+      toast.error('Error al archivar el jugador');
     }
   };
 
@@ -612,7 +612,7 @@ const PlayersPage: React.FC = () => {
                           onClick={(e) => { e.stopPropagation(); handleDeleteFifa(player.id); }}
                           className="p-1.5 rounded-lg text-white transition-all"
                           style={{ background: 'rgba(239,68,68,0.85)' }}
-                          title="Eliminar jugador"
+                          title="Archivar jugador"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>

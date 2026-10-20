@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 
 public record PlayerStatsRequest(
         @NotBlank(message = "Season is required")
+        @jakarta.validation.constraints.Size(max = 20)
         String temporada,
 
         @NotNull(message = "Goals is required")

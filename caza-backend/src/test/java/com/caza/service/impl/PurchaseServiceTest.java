@@ -43,4 +43,25 @@ class PurchaseServiceTest {
    when(purchases.findById(8L)).thenReturn(Optional.of(p));
    assertEquals(new BigDecimal("500"),service.getPurchaseById(8L,1L,false).getPrecioTotal());
  }
+
+ @Test void sameRequestReturnsOriginalPurchaseWithoutTouchingCartOrBalance() {
+   var u=user(); var key=UUID.randomUUID().toString();
+   var existing=Purchase.builder().id(42L).user(u).precioTotal(new BigDecimal("100")).itemsSnapshot("[]").build();
+   when(users.findForUpdate(1L)).thenReturn(Optional.of(u));
+   when(purchases.findByUserIdAndRequestKey(1L,key)).thenReturn(Optional.of(existing));
+   assertEquals(42L,service.checkout(1L,key).getId());
+   assertEquals(new BigDecimal("1000"),u.getSaldo());
+   verifyNoInteractions(carts); verify(purchases,never()).save(any()); verify(users,never()).save(any());
+ }
+ @Test void archivedEfootballCannotBePurchased() {
+   var u=user();when(users.findForUpdate(1L)).thenReturn(Optional.of(u));
+   var archived=Jugador.builder().id(2L).nombre("Archived").precio(BigDecimal.TEN).activo(false).build();
+   when(carts.findByUserId(1L)).thenReturn(List.of(CartItem.builder().jugador(archived).cantidad(1).build()));
+   assertThrows(IllegalArgumentException.class,()->service.checkout(1L));
+   verify(purchases,never()).save(any());assertEquals(new BigDecimal("1000"),u.getSaldo());
+ }
+ @Test void invalidIdempotencyKeyIsRejectedBeforeDatabaseWrite() {
+   assertThrows(IllegalArgumentException.class,()->service.checkout(1L,"invalid"));
+   verifyNoInteractions(purchases,carts,users);
+ }
 }

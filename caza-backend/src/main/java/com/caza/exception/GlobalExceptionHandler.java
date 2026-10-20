@@ -122,6 +122,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(401).body(ErrorResponse.builder().status(401).error("Unauthorized").message("Credenciales inválidas").build());
     }
 
+    @ExceptionHandler({org.springframework.orm.ObjectOptimisticLockingFailureException.class, jakarta.persistence.OptimisticLockException.class})
+    public ResponseEntity<ErrorResponse> conflict(Exception ex) {
+        return ResponseEntity.status(409).body(ErrorResponse.builder().status(409).message("Los datos cambiaron en otro dispositivo. Recarga antes de guardar.").build());
+    }
+
+    @ExceptionHandler({org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class, org.springframework.http.converter.HttpMessageNotReadableException.class})
+    public ResponseEntity<ErrorResponse> invalidInput(Exception ex) {
+        return ResponseEntity.badRequest().body(ErrorResponse.builder().status(400).message("Datos o filtros inválidos").build());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex, HttpServletRequest request) {

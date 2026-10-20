@@ -28,7 +28,11 @@ public record JugadorRequest(
 
         /** URL de imagen del jugador (opcional, se obtiene tras hacer upload) */
         @Size(max = 500, message = "La URL no puede superar 500 caracteres")
-        String imagenUrl
+        String imagenUrl,
+
+        @Size(max = 500)
+        @Pattern(regexp = "^$|^https://[^\\s]+$|^http://(?:127\\.0\\.0\\.1|localhost)(?::[0-9]+)?/[^\\s]*$", message = "Usa una URL HTTPS para el recorte")
+        String hologramUrl
 
         // GA, PG, PA y PGA son columnas GENERATED ALWAYS en PostgreSQL — las calcula Postgres
 ) {}

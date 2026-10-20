@@ -24,6 +24,7 @@ public class PlayerResponse {
     private Integer edad;
     private BigDecimal precio;
     private String imagenUrl;
+    private String hologramUrl;
     private Boolean activo;
     private List<PlayerStatsResponse> stats;
 }

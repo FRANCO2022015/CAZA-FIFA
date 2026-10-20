@@ -26,8 +26,8 @@ public class PurchaseController {
 
     @PostMapping("/checkout")
     @Operation(summary = "Checkout: buy all items in cart")
-    public ResponseEntity<ApiResponse<PurchaseResponse>> checkout(@AuthenticationPrincipal User user) {
-        PurchaseResponse response = purchaseService.checkout(user.getId());
+    public ResponseEntity<ApiResponse<PurchaseResponse>> checkout(@AuthenticationPrincipal User user, @RequestHeader(value="Idempotency-Key", required=false) String key) {
+        PurchaseResponse response = purchaseService.checkout(user.getId(), key);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Compra realizada exitosamente", response));
     }
@@ -36,6 +36,11 @@ public class PurchaseController {
     @Operation(summary = "Get user purchase history")
     public ResponseEntity<ApiResponse<List<PurchaseResponse>>> getUserPurchases(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(ApiResponse.success(purchaseService.getUserPurchases(user.getId())));
+    }
+
+    @GetMapping("/requests/{key}")
+    public ApiResponse<PurchaseResponse> byRequest(@AuthenticationPrincipal User user, @PathVariable String key) {
+        return ApiResponse.success(purchaseService.getByRequest(user.getId(), key));
     }
 
     @GetMapping("/{id}")

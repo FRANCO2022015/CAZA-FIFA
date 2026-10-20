@@ -21,7 +21,7 @@ export const playersApi = {
     return res.data.data;
   },
 
-  create: async (data: Partial<Player>): Promise<Player> => {
+  create: async (data: Partial<Player> & {initialStats?: Omit<PlayerStats,"id"|"playerId">}): Promise<Player> => {
     const res = await axiosInstance.post<ApiResponse<Player>>('/players', data);
     return res.data.data;
   },

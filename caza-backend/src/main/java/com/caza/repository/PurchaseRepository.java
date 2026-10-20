@@ -9,5 +9,7 @@ import java.util.List;
 @Repository
 public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
 
+    java.util.Optional<Purchase> findByUserIdAndRequestKey(Long userId, String key);
+
     List<Purchase> findByUserIdOrderByFechaCompraDesc(Long userId);
 }
