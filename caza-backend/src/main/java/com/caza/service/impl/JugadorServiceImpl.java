@@ -32,7 +32,7 @@ public class JugadorServiceImpl implements JugadorService {
         Sort sort = sortDir.equalsIgnoreCase("desc")
                 ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
-        Pageable pageable = PageRequest.of(page, Math.min(100, Math.max(1, size)), sort);
+        Pageable pageable = PageRequest.of(page, Math.min(100, Math.max(1, size)), sort.and(Sort.by("id").ascending()));
         Page<Jugador> jugadores = jugadorRepository.findByActivoTrue(pageable);
         return PagedResponse.of(jugadores.map(this::mapToResponse));
     }
@@ -51,7 +51,7 @@ public class JugadorServiceImpl implements JugadorService {
         Sort sort = sortDir.equalsIgnoreCase("desc")
                 ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
-        Pageable pageable = PageRequest.of(page, Math.min(100, Math.max(1, size)), sort);
+        Pageable pageable = PageRequest.of(page, Math.min(100, Math.max(1, size)), sort.and(Sort.by("id").ascending()));
         Page<Jugador> jugadores = jugadorRepository.searchJugadores(nombre, pageable);
         return PagedResponse.of(jugadores.map(this::mapToResponse));
     }
@@ -72,7 +72,7 @@ public class JugadorServiceImpl implements JugadorService {
         Sort sort = sortDir.equalsIgnoreCase("desc")
                 ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
-        Pageable pageable = PageRequest.of(page, Math.min(100, Math.max(1, size)), sort);
+        Pageable pageable = PageRequest.of(page, Math.min(100, Math.max(1, size)), sort.and(Sort.by("id").ascending()));
 
         Page<Jugador> jugadores = jugadorRepository.searchAdvanced(
                 nombre,

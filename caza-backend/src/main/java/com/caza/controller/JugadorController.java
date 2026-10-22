@@ -30,8 +30,8 @@ public class JugadorController {
     public ResponseEntity<ApiResponse<PagedResponse<JugadorResponse>>> getAll(
             @RequestParam(defaultValue = "0")      int page,
             @RequestParam(defaultValue = "12")     int size,
-            @RequestParam(defaultValue = "nombre") String sortBy,
-            @RequestParam(defaultValue = "asc")    String sortDir) {
+            @RequestParam(defaultValue = "goles") String sortBy,
+            @RequestParam(defaultValue = "desc")    String sortDir) {
         return ResponseEntity.ok(ApiResponse.success(
                 jugadorService.getAll(page, size, sortBy, sortDir)
         ));
@@ -49,8 +49,8 @@ public class JugadorController {
             @RequestParam(required = false)        String nombre,
             @RequestParam(defaultValue = "0")      int page,
             @RequestParam(defaultValue = "12")     int size,
-            @RequestParam(defaultValue = "nombre") String sortBy,
-            @RequestParam(defaultValue = "asc")    String sortDir) {
+            @RequestParam(defaultValue = "goles") String sortBy,
+            @RequestParam(defaultValue = "desc")    String sortDir) {
         return ResponseEntity.ok(ApiResponse.success(
                 jugadorService.search(nombre, page, size, sortBy, sortDir)
         ));
@@ -72,8 +72,8 @@ public class JugadorController {
             @RequestParam(required = false) java.math.BigDecimal minPga,
             @RequestParam(defaultValue = "0")      int page,
             @RequestParam(defaultValue = "12")     int size,
-            @RequestParam(defaultValue = "nombre") String sortBy,
-            @RequestParam(defaultValue = "asc")    String sortDir) {
+            @RequestParam(defaultValue = "goles") String sortBy,
+            @RequestParam(defaultValue = "desc")    String sortDir) {
         return ResponseEntity.ok(ApiResponse.success(
                 jugadorService.searchAdvanced(
                         nombre,

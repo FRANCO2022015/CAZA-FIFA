@@ -32,8 +32,8 @@ public class PlayerController {
     public ResponseEntity<ApiResponse<PagedResponse<PlayerResponse>>> getAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size,
-            @RequestParam(defaultValue = "nombre") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDir) {
+            @RequestParam(defaultValue = "goles") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
         return ResponseEntity.ok(ApiResponse.success(playerService.getAll(page, size, sortBy, sortDir)));
     }
 
@@ -53,8 +53,8 @@ public class PlayerController {
             @RequestParam(required = false) BigDecimal maxPrecio,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size,
-            @RequestParam(defaultValue = "nombre") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDir) {
+            @RequestParam(defaultValue = "goles") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
         return ResponseEntity.ok(ApiResponse.success(
                 playerService.search(nombre, posicion, nacionalidad, minPrecio, maxPrecio, page, size, sortBy, sortDir)
         ));

@@ -1,3 +1,4 @@
+import { useCatalogueState } from '../hooks/useCatalogueState';
 import React, { useEffect, useState, useCallback } from 'react';
 import { Users, Gamepad2, Plus, Search, X, Trash2, Pencil, ArrowUpDown, ChevronUp, ChevronDown, SlidersHorizontal, FilterX } from 'lucide-react';
 import Layout from '../components/layout/Layout';
@@ -46,101 +47,48 @@ const PlayersPage: React.FC = () => {
   const { user } = useAuth();
   const isAdmin = user?.rol === 'ADMIN';
 
-  const [activeSection, setActiveSection] = useState<Section>('FIFA');
+  const stateKey = `catalogue-v2:${user?.id ?? 'guest'}:`;
+  const [ownedOnly, setOwnedOnly] = useCatalogueState(stateKey + 'owned', false);
+  const [activeSection, setActiveSection] = useCatalogueState<Section>(stateKey + 'activeSection', 'FIFA');
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [editingJugador, setEditingJugador] = useState<Jugador | null>(null);
 
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useCatalogueState(stateKey + 'searchTerm', '');
 
-  const [fifaSortBy, setFifaSortBy] = useState('nombre');
-  const [fifaSortDir, setFifaSortDir] = useState<SortDir>('asc');
+  const [fifaSortBy, setFifaSortBy] = useCatalogueState(stateKey + 'fifaSortBy', 'goles');
+  const [fifaSortDir, setFifaSortDir] = useCatalogueState<SortDir>(stateKey + 'fifaSortDir', 'desc');
 
-  const [efSortBy, setEfSortBy] = useState('nombre');
-  const [efSortDir, setEfSortDir] = useState<SortDir>('asc');
+  const [efSortBy, setEfSortBy] = useCatalogueState(stateKey + 'efSortBy', 'goles');
+  const [efSortDir, setEfSortDir] = useCatalogueState<SortDir>(stateKey + 'efSortDir', 'desc');
 
-  const { players, paged: fifaPaged, isLoading: fifaLoading, fetchPlayers, searchPlayers } = usePlayers();
-  const [fifaPage, setFifaPage] = useState(0);
+  const { players, paged: fifaPaged, isLoading: fifaLoading, error: fifaError, fetchPlayers, searchPlayers } = usePlayers(ownedOnly);
+  const [fifaPage, setFifaPage] = useCatalogueState(stateKey + 'fifaPage', 0);
 
-  const { jugadores, paged: efootballPaged, isLoading: efootballLoading, fetchJugadores, searchJugadores, searchAdvanced } = useJugadores();
-  const [efootballPage, setEfootballPage] = useState(0);
+  const { jugadores, paged: efootballPaged, isLoading: efootballLoading, error: efError, fetchJugadores, searchJugadores, searchAdvanced } = useJugadores(ownedOnly);
+  const [efootballPage, setEfootballPage] = useCatalogueState(stateKey + 'efootballPage', 0);
 
   const defaultFilters: AdvancedFilterParams = {};
-  const [showAdvFilters, setShowAdvFilters] = useState(false);
-  const [advFilters, setAdvFilters] = useState<AdvancedFilterParams>(defaultFilters);
-  const [filtersActive, setFiltersActive] = useState(false);
-  const hasActiveFilters = filtersActive && Object.values(advFilters).some(v => v !== undefined && v !== '');
+  const [showAdvFilters, setShowAdvFilters] = useCatalogueState(stateKey + 'showAdvFilters', false);
+  const [advFilters, setAdvFilters] = useCatalogueState<AdvancedFilterParams>(stateKey + 'advFilters', defaultFilters);
+  const [filtersActive, setFiltersActive] = useCatalogueState(stateKey + 'filtersActive', false);
+  const [appliedFilters, setAppliedFilters] = useCatalogueState<AdvancedFilterParams>(stateKey + 'appliedFilters', {});
+  const hasActiveFilters = filtersActive && Object.values(appliedFilters).some(v => v !== undefined && v !== '');
 
-  const applyAdvancedSearch = useCallback((extraParams?: Partial<AdvancedFilterParams>) => {
-    searchAdvanced({
-      ...advFilters,
-      nombre: searchTerm || undefined,
-      page: 0,
-      size: 12,
-      sortBy: efSortBy,
-      sortDir: efSortDir,
-      ...extraParams,
-    });
-  }, [advFilters, searchTerm, efSortBy, efSortDir, searchAdvanced]);
-
-  useEffect(() => {
-    fetchPlayers(0, 12, fifaSortBy, fifaSortDir);
-  }, [fetchPlayers]); // eslint-disable-line
-
-  useEffect(() => {
-    fetchJugadores(0, 12, efSortBy, efSortDir);
-  }, [fetchJugadores]); // eslint-disable-line
-
-  useEffect(() => {
+  const reload = useCallback(() => {
     if (activeSection === 'FIFA') {
-      setFifaPage(0);
-      if (searchTerm.trim()) {
-        searchPlayers({ nombre: searchTerm, page: 0, size: 12, sortBy: fifaSortBy, sortDir: fifaSortDir });
-      } else {
-        fetchPlayers(0, 12, fifaSortBy, fifaSortDir);
-      }
+      return searchTerm.trim()
+        ? searchPlayers({nombre: searchTerm, page: fifaPage, size: 12, sortBy: fifaSortBy, sortDir: fifaSortDir})
+        : fetchPlayers(fifaPage, 12, fifaSortBy, fifaSortDir);
     }
-  }, [fifaSortBy, fifaSortDir]); // eslint-disable-line
-
-  useEffect(() => {
-    if (activeSection === 'EFOOTBALL') {
-      setEfootballPage(0);
-      if (filtersActive && hasActiveFilters) {
-        searchAdvanced({ ...advFilters, nombre: searchTerm || undefined, page: 0, size: 12, sortBy: efSortBy, sortDir: efSortDir });
-      } else if (searchTerm.trim()) {
-        searchJugadores({ nombre: searchTerm, page: 0, size: 12, sortBy: efSortBy, sortDir: efSortDir });
-      } else {
-        fetchJugadores(0, 12, efSortBy, efSortDir);
-      }
-    }
-  }, [efSortBy, efSortDir]); // eslint-disable-line
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (activeSection === 'FIFA') {
-        if (searchTerm.trim()) {
-          searchPlayers({ nombre: searchTerm, page: 0, size: 12, sortBy: fifaSortBy, sortDir: fifaSortDir });
-          setFifaPage(0);
-        } else {
-          fetchPlayers(0, 12, fifaSortBy, fifaSortDir);
-          setFifaPage(0);
-        }
-      } else {
-        if (filtersActive && hasActiveFilters) {
-          searchAdvanced({ ...advFilters, nombre: searchTerm || undefined, page: 0, size: 12, sortBy: efSortBy, sortDir: efSortDir });
-          setEfootballPage(0);
-        } else if (searchTerm.trim()) {
-          searchJugadores({ nombre: searchTerm, page: 0, size: 12, sortBy: efSortBy, sortDir: efSortDir });
-          setEfootballPage(0);
-        } else {
-          fetchJugadores(0, 12, efSortBy, efSortDir);
-          setEfootballPage(0);
-        }
-      }
-    }, 350);
-    return () => clearTimeout(timer);
-  }, [searchTerm, activeSection]); // eslint-disable-line
+    if (hasActiveFilters) return searchAdvanced({...appliedFilters, nombre: searchTerm || undefined, page: efootballPage, size: 12, sortBy: efSortBy, sortDir: efSortDir});
+    return searchTerm.trim()
+      ? searchJugadores({nombre: searchTerm, page: efootballPage, size: 12, sortBy: efSortBy, sortDir: efSortDir})
+      : fetchJugadores(efootballPage, 12, efSortBy, efSortDir);
+  }, [activeSection, searchTerm, fifaPage, efootballPage, fifaSortBy, fifaSortDir, efSortBy, efSortDir, hasActiveFilters, appliedFilters, fetchPlayers, searchPlayers, fetchJugadores, searchJugadores, searchAdvanced]);
+  useEffect(() => { const timer = setTimeout(() => { void reload(); }, 150); return () => clearTimeout(timer); }, [reload]);
+  const changeSearch = (value: string) => { setSearchTerm(value); setFifaPage(0); setEfootballPage(0); };
 
   const handleSectionChange = (section: Section) => {
     setActiveSection(section);
@@ -150,44 +98,27 @@ const PlayersPage: React.FC = () => {
   };
 
   const handleFifaSort = (field: string) => {
+    setFifaPage(0);
     if (fifaSortBy === field) {
       setFifaSortDir(d => d === 'asc' ? 'desc' : 'asc');
     } else {
       setFifaSortBy(field);
-      setFifaSortDir('asc');
+      setFifaSortDir(field === 'nombre' || field === 'nacionalidad' ? 'asc' : 'desc');
     }
   };
 
   const handleEfSort = (field: string) => {
+    setEfootballPage(0);
     if (efSortBy === field) {
       setEfSortDir(d => d === 'asc' ? 'desc' : 'asc');
     } else {
       setEfSortBy(field);
-      setEfSortDir('asc');
+      setEfSortDir(field === 'nombre' ? 'asc' : 'desc');
     }
   };
 
-  const handleFifaPageChange = async (page: number) => {
-    setFifaPage(page);
-    if (searchTerm.trim()) {
-      await searchPlayers({ nombre: searchTerm, page, size: 12, sortBy: fifaSortBy, sortDir: fifaSortDir });
-    } else {
-      await fetchPlayers(page, 12, fifaSortBy, fifaSortDir);
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleEfootballPageChange = async (page: number) => {
-    setEfootballPage(page);
-    if (filtersActive && hasActiveFilters) {
-      await searchAdvanced({ ...advFilters, nombre: searchTerm || undefined, page, size: 12, sortBy: efSortBy, sortDir: efSortDir });
-    } else if (searchTerm.trim()) {
-      await searchJugadores({ nombre: searchTerm, page, size: 12, sortBy: efSortBy, sortDir: efSortDir });
-    } else {
-      await fetchJugadores(page, 12, efSortBy, efSortDir);
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  const handleFifaPageChange = (page: number) => { setFifaPage(page); window.scrollTo({top: 0, behavior: 'smooth'}); };
+  const handleEfootballPageChange = (page: number) => { setEfootballPage(page); window.scrollTo({top: 0, behavior: 'smooth'}); };
 
   // ─── Modal handlers ───────────────────────────────────────────────────────
 
@@ -209,13 +140,7 @@ const PlayersPage: React.FC = () => {
     setModalOpen(true);
   };
 
-  const handleSuccess = useCallback(() => {
-    if (activeSection === 'FIFA') {
-      fetchPlayers(fifaPage, 12, fifaSortBy, fifaSortDir);
-    } else {
-      fetchJugadores(efootballPage, 12, efSortBy, efSortDir);
-    }
-  }, [activeSection, fifaPage, efootballPage, fifaSortBy, fifaSortDir, efSortBy, efSortDir, fetchPlayers, fetchJugadores]);
+  const handleSuccess = reload;
 
   // ─── Eliminar ─────────────────────────────────────────────────────────────
 
@@ -224,7 +149,7 @@ const PlayersPage: React.FC = () => {
     try {
       await playersApi.delete(id);
       toast.success('Jugador archivado');
-      fetchPlayers(fifaPage, 12, fifaSortBy, fifaSortDir);
+      await reload();
     } catch {
       toast.error('Error al archivar el jugador');
     }
@@ -235,7 +160,7 @@ const PlayersPage: React.FC = () => {
     try {
       await jugadoresApi.delete(id);
       toast.success('Jugador archivado');
-      fetchJugadores(efootballPage, 12, efSortBy, efSortDir);
+      await reload();
     } catch {
       toast.error('Error al archivar el jugador');
     }
@@ -362,6 +287,14 @@ const PlayersPage: React.FC = () => {
         </button>
       </div>
 
+      <div className="flex flex-wrap items-center gap-3 mb-5">
+        {[false, true].map(owned => <button key={String(owned)} aria-pressed={ownedOnly === owned}
+          onClick={() => { setOwnedOnly(owned); setFifaPage(0); setEfootballPage(0); }}
+          className={`px-4 py-2 rounded-xl font-semibold ${ownedOnly === owned ? 'bg-purple-600 text-white' : 'bg-white/5 text-gray-300'}`}>
+          {owned ? 'Mis jugadores' : 'Todos los jugadores'}
+        </button>)}
+        {ownedOnly && <p className="text-sm text-gray-400">Tus jugadores comprados, incluidos titulares y suplentes.</p>}
+      </div>
       {/* ─── Buscador ─────────────────────────────────────────────────────── */}
       <div className="relative mb-4">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -370,12 +303,12 @@ const PlayersPage: React.FC = () => {
           type="text"
           placeholder={`Buscar en ${activeSection === 'FIFA' ? '⚽ FIFA' : '🎮 eFootball'}...`}
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => changeSearch(e.target.value)}
           className="w-full pl-11 pr-10 py-3 rounded-xl text-white text-sm outline-none transition-all"
           style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
         />
         {searchTerm && (
-          <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors">
+          <button onClick={() => changeSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors">
             <X className="w-4 h-4" />
           </button>
         )}
@@ -547,9 +480,10 @@ const PlayersPage: React.FC = () => {
                       toast('Ingresa al menos un filtro para aplicar', { icon: '⚠️' });
                       return;
                     }
+                    setAppliedFilters({...advFilters});
                     setFiltersActive(true);
                     setEfootballPage(0);
-                    searchAdvanced({ ...advFilters, nombre: searchTerm || undefined, page: 0, size: 12, sortBy: efSortBy, sortDir: efSortDir });
+
                   }}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90"
                   style={{ background: 'linear-gradient(135deg, #FF8C00, #FF4500)' }}
@@ -560,9 +494,10 @@ const PlayersPage: React.FC = () => {
                 <button
                   onClick={() => {
                     setAdvFilters(defaultFilters);
+                    setAppliedFilters({});
                     setFiltersActive(false);
                     setEfootballPage(0);
-                    fetchJugadores(0, 12, efSortBy, efSortDir);
+
                   }}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-300 hover:text-white transition-all"
                   style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
@@ -577,7 +512,7 @@ const PlayersPage: React.FC = () => {
       )}
 
       {/* ─── Grid de contenido ────────────────────────────────────────────── */}
-      {isLoading ? (
+      {(activeSection === 'FIFA' ? fifaError : efError) ? (<div role="alert" className="glass-card p-6">No se pudo cargar la lista. <button onClick={() => void reload()}>Reintentar</button></div>) : isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
@@ -587,8 +522,8 @@ const PlayersPage: React.FC = () => {
           <EmptyState
             icon={<Users className="w-8 h-8" />}
             title="No se encontraron jugadores FIFA"
-            description="Intenta con otro nombre o agrega el primero"
-            action={{ label: 'Limpiar búsqueda', onClick: () => setSearchTerm('') }}
+            description={ownedOnly ? "Aquí aparecerán tus jugadores comprados que coincidan con la búsqueda." : "Intenta con otro nombre o agrega el primero"}
+            action={{ label: 'Limpiar búsqueda', onClick: () => changeSearch('') }}
           />
         ) : (
           <>
@@ -637,8 +572,8 @@ const PlayersPage: React.FC = () => {
           <EmptyState
             icon={<Gamepad2 className="w-8 h-8" />}
             title="No se encontraron jugadores eFootball"
-            description="Intenta con otro nombre o agrega el primero"
-            action={{ label: 'Limpiar búsqueda', onClick: () => setSearchTerm('') }}
+            description={ownedOnly ? "Aquí aparecerán tus jugadores comprados que coincidan con la búsqueda." : "Intenta con otro nombre o agrega el primero"}
+            action={{ label: 'Limpiar búsqueda', onClick: () => changeSearch('') }}
           />
         ) : (
           <>

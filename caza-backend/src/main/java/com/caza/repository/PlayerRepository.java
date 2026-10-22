@@ -57,7 +57,7 @@ public interface PlayerRepository extends JpaRepository<Player, Long>, JpaSpecif
             AND (:minPrecio IS NULL OR p.precio >= :minPrecio)
             AND (:maxPrecio IS NULL OR p.precio <= :maxPrecio)
             GROUP BY p.id, p.nombre, p.nacionalidad, p.posicion, p.edad, p.precio, p.imagenUrl, p.activo
-            ORDER BY SUM(COALESCE(s.goles, 0)) DESC
+            ORDER BY SUM(COALESCE(s.goles, 0)) DESC, p.id ASC
             """,
             countQuery = """
             SELECT COUNT(p) FROM Player p
@@ -87,7 +87,7 @@ public interface PlayerRepository extends JpaRepository<Player, Long>, JpaSpecif
             AND (:minPrecio IS NULL OR p.precio >= :minPrecio)
             AND (:maxPrecio IS NULL OR p.precio <= :maxPrecio)
             GROUP BY p.id, p.nombre, p.nacionalidad, p.posicion, p.edad, p.precio, p.imagenUrl, p.activo
-            ORDER BY SUM(COALESCE(s.goles, 0)) ASC
+            ORDER BY SUM(COALESCE(s.goles, 0)) ASC, p.id ASC
             """,
             countQuery = """
             SELECT COUNT(p) FROM Player p
@@ -117,7 +117,7 @@ public interface PlayerRepository extends JpaRepository<Player, Long>, JpaSpecif
             AND (:minPrecio IS NULL OR p.precio >= :minPrecio)
             AND (:maxPrecio IS NULL OR p.precio <= :maxPrecio)
             GROUP BY p.id, p.nombre, p.nacionalidad, p.posicion, p.edad, p.precio, p.imagenUrl, p.activo
-            ORDER BY SUM(COALESCE(s.asistencias, 0)) DESC
+            ORDER BY SUM(COALESCE(s.asistencias, 0)) DESC, p.id ASC
             """,
             countQuery = """
             SELECT COUNT(p) FROM Player p
@@ -147,7 +147,7 @@ public interface PlayerRepository extends JpaRepository<Player, Long>, JpaSpecif
             AND (:minPrecio IS NULL OR p.precio >= :minPrecio)
             AND (:maxPrecio IS NULL OR p.precio <= :maxPrecio)
             GROUP BY p.id, p.nombre, p.nacionalidad, p.posicion, p.edad, p.precio, p.imagenUrl, p.activo
-            ORDER BY SUM(COALESCE(s.asistencias, 0)) ASC
+            ORDER BY SUM(COALESCE(s.asistencias, 0)) ASC, p.id ASC
             """,
             countQuery = """
             SELECT COUNT(p) FROM Player p

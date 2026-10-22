@@ -138,7 +138,7 @@ public class PlayerServiceImpl implements PlayerService {
         } else {
             String cleanSortBy = (sortBy == null || sortBy.isBlank()) ? "nombre" : sortBy;
             Sort sort = isDesc ? Sort.by(cleanSortBy).descending() : Sort.by(cleanSortBy).ascending();
-            pageable = PageRequest.of(page, Math.min(100, Math.max(1, size)), sort);
+            pageable = PageRequest.of(page, Math.min(100, Math.max(1, size)), sort.and(Sort.by("id").ascending()));
             players = playerRepository.searchPlayers(nombre, posicionStr, nacionalidad, minPrecio, maxPrecio, pageable);
         }
 
