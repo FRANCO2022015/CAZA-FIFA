@@ -1,5 +1,6 @@
 import React from 'react';
 import AuditPage from './pages/AuditPage';
+import RequestsPage from './pages/RequestsPage';
 import ArchivePage from './pages/ArchivePage';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
@@ -60,6 +61,7 @@ const App: React.FC = () => {
             {/* Protected routes */}
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard"    element={<DashboardPage />} />
+              <Route path="/requests" element={<RequestsPage />} />
               <Route path="/players"      element={<PlayersPage />} />
               <Route path="/players/:id"  element={<PlayerDetailPage />} />
               <Route path="/cart"         element={<CartPage />} />

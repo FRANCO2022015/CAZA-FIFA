@@ -1,120 +1,25 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
+import {useState} from 'react';
+import {Link,useNavigate} from 'react-router-dom';
+import {Eye,EyeOff,Lock,Mail,User,ArrowUpRight,ShieldCheck,Users,BarChart3} from 'lucide-react';
+import {useAuth} from '../hooks/useAuth';
 import toast from 'react-hot-toast';
-
-const RegisterPage: React.FC = () => {
-  const { register } = useAuth();
-  const navigate = useNavigate();
-  const [form, setForm] = useState({ nombre: '', correo: '', password: '', confirm: '' });
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (form.password !== form.confirm) return toast.error('Las contraseñas no coinciden');
-    if (form.password.length < 6) return toast.error('La contraseña debe tener al menos 6 caracteres');
-    try {
-      setIsLoading(true);
-      await register({ nombre: form.nombre, correo: form.correo, password: form.password });
-      toast.success('¡Cuenta creada! Recibes $10,000 de saldo inicial 🎉');
-      navigate('/dashboard');
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Error al registrarse');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen flex">
-      {/* Left panel */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center"
-           style={{ background: 'linear-gradient(135deg, #0D0D1A 0%, #1A1A3E 50%, #0D0D1A 100%)' }}>
-        <div className="absolute top-20 right-20 w-64 h-64 rounded-full opacity-10 animate-pulse"
-             style={{ background: 'radial-gradient(circle, #FF6584, transparent)' }} />
-        <div className="absolute bottom-20 left-20 w-48 h-48 rounded-full opacity-10 animate-pulse"
-             style={{ background: 'radial-gradient(circle, #6C63FF, transparent)', animationDelay: '1s' }} />
-        <div className="relative z-10 text-center px-12">
-          <div className="text-7xl mb-6">🏆</div>
-          <h2 className="text-4xl font-black text-white mb-4">Únete a <span className="gradient-text">CAZA</span></h2>
-          <p className="text-lg text-gray-300 mb-8">Recibe $10,000 de saldo ficticio para comprar tus jugadores favoritos</p>
-          <div className="space-y-3">
-            {['✅ Mercado de jugadores profesional', '✅ Chat IA con Gemini', '✅ Foro comunitario', '✅ Gestión de reuniones'].map(item => (
-              <p key={item} className="text-gray-300 text-sm">{item}</p>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Right panel */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8" style={{ background: '#0D0D1A' }}>
-        <div className="w-full max-w-md animate-slideUp">
-          <div className="lg:hidden text-center mb-8">
-            <span className="text-4xl">⚽</span>
-            <h1 className="text-3xl font-black gradient-text mt-2">CAZA</h1>
-          </div>
-          <h2 className="text-3xl font-bold text-white mb-2">Crear cuenta</h2>
-          <p className="text-gray-400 mb-8">Empieza con $10,000 de saldo gratis</p>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Nombre completo</label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                <input name="nombre" type="text" value={form.nombre} onChange={handleChange}
-                  placeholder="Tu nombre" className="input-dark pl-10" required />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Correo electrónico</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                <input name="correo" type="email" value={form.correo} onChange={handleChange}
-                  placeholder="tu@correo.com" className="input-dark pl-10" required />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Contraseña</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                <input name="password" type={showPassword ? 'text' : 'password'} value={form.password}
-                  onChange={handleChange} placeholder="Mínimo 6 caracteres" className="input-dark pl-10 pr-10" required />
-                <button type="button" onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300">
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Confirmar contraseña</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                <input name="confirm" type="password" value={form.confirm} onChange={handleChange}
-                  placeholder="Repite la contraseña" className="input-dark pl-10" required />
-              </div>
-            </div>
-            <button type="submit" disabled={isLoading} className="btn-primary w-full py-3.5 text-base mt-2">
-              {isLoading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Creando cuenta...
-                </span>
-              ) : 'Crear cuenta gratis'}
-            </button>
-          </form>
-          <p className="text-center text-gray-400 mt-6 text-sm">
-            ¿Ya tienes cuenta?{' '}
-            <Link to="/login" className="font-semibold" style={{ color: '#6C63FF' }}>Iniciar sesión</Link>
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default RegisterPage;
+export default function RegisterPage(){
+ const {register}=useAuth();const navigate=useNavigate();
+ const [form,setForm]=useState({nombre:'',correo:'',password:'',confirm:''});
+ const [show,setShow]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState('');
+ const mismatch=!!form.confirm&&form.confirm!==form.password;
+ const submit=async(e:React.FormEvent)=>{e.preventDefault();if(busy)return;if(mismatch){setError('Las contraseñas no coinciden.');return;}setBusy(true);setError('');
+  try{await register({nombre:form.nombre.trim(),correo:form.correo.trim(),password:form.password});toast.success('Cuenta creada. Ya puedes explorar CAZA.');navigate('/dashboard');}
+  catch(e:any){setError(e.response?.data?.message??'No se pudo crear la cuenta. Inténtalo nuevamente.');}finally{setBusy(false);}
+ };
+ return <main className="auth-shell">
+  <section className="auth-story"><Link to="/login" className="auth-brand">⚽ CAZA<span>FOOTBALL LAB</span></Link><div className="auth-story-content"><p className="eyebrow">TU CLUB. TUS DECISIONES.</p><h1>El próximo gran<br/>equipo empieza<br/><span className="gradient-text">contigo.</span></h1><p>Explora FIFA y eFootball, descubre tus jugadores y construye una alineación con tu propio estilo.</p><div className="auth-features">{[[Users,'Mercado de jugadores'],[BarChart3,'Estadísticas y alineaciones'],[ShieldCheck,'Comunidad y cambios revisados']].map(([Icon,text])=>{const I=Icon as typeof Users;return <div key={String(text)}><I size={19}/><span>{String(text)}</span></div>})}</div></div><p className="auth-footnote">Un proyecto nacido de cuatro años de fútbol virtual.</p></section>
+  <section className="auth-form-panel"><div className="w-full max-w-md"><Link className="text-sm text-gray-400 hover:text-white" to="/login">← Volver al inicio</Link><p className="eyebrow mt-10">BIENVENIDO A TU CLUB</p><h2 className="text-3xl font-bold mt-3">Crear cuenta</h2><p className="text-gray-400 mt-3 mb-8">Empieza con $10,000 de saldo ficticio.</p>
+   <form onSubmit={submit} className="space-y-5"><fieldset disabled={busy} className="space-y-5">{([
+    ['nombre','Nombre completo',User,'Tu nombre','text','name'],['correo','Correo electrónico',Mail,'tu@correo.com','email','email'],['password','Contraseña',Lock,'Mínimo 6 caracteres',show?'text':'password','new-password'],['confirm','Confirmar contraseña',Lock,'Repite tu contraseña',show?'text':'password','new-password']
+   ] as const).map(([key,label,Icon,placeholder,type,auto])=><div key={key}><label htmlFor={`register-${key}`} className="block text-sm font-medium text-gray-300 mb-2">{label}</label><div className="field-with-icon"><Icon aria-hidden="true" size={19}/><input id={`register-${key}`} name={key} type={type} autoComplete={auto} required minLength={key==='password'||key==='confirm'?6:undefined} maxLength={key==='nombre'?100:undefined} placeholder={placeholder} className={`input-dark ${key==='password'?'with-action':''}`} value={form[key]} aria-invalid={key==='confirm'&&mismatch} aria-describedby={key==='confirm'&&mismatch?'confirm-error':undefined} onChange={e=>setForm({...form,[key]:e.target.value})}/>{key==='password'&&<button type="button" className="field-action" aria-label={show?'Ocultar contraseña':'Mostrar contraseña'} onClick={()=>setShow(!show)}>{show?<EyeOff size={19}/>:<Eye size={19}/>}</button>}</div>{key==='confirm'&&mismatch&&<p id="confirm-error" className="text-rose-300 text-xs mt-2">Las contraseñas no coinciden.</p>}</div>)}</fieldset>
+    {error&&<p className="request-error" role="alert">{error}</p>}<button className="btn-primary w-full py-3.5" disabled={busy}>{busy?'Creando cuenta…':'Crear mi cuenta'}<ArrowUpRight size={18}/></button>
+   </form><p className="text-sm text-gray-400 mt-7 text-center">¿Ya eres parte de CAZA? <Link className="text-purple-300 font-semibold" to="/login">Inicia sesión</Link></p>
+  </div></section>
+ </main>;
+}

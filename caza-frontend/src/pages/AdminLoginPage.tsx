@@ -134,7 +134,7 @@ const AdminLoginPage: React.FC = () => {
             <div style={{ position: 'relative' }}>
               <Mail style={{ position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)', width: '15px', height: '15px', color: 'rgba(234,179,8,0.4)' }} />
               <input
-                type="email" required
+                aria-label="Correo de administrador" autoComplete="email" type="email" required
                 value={correo}
                 onChange={e => setCorreo(e.target.value)}
                 placeholder="admin@caza.com"
@@ -150,7 +150,7 @@ const AdminLoginPage: React.FC = () => {
             <div style={{ position: 'relative' }}>
               <Lock style={{ position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)', width: '15px', height: '15px', color: 'rgba(234,179,8,0.4)' }} />
               <input
-                type={showPassword ? 'text' : 'password'} required
+                aria-label="Contraseña de administrador" autoComplete="current-password" type={showPassword ? 'text' : 'password'} required
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"

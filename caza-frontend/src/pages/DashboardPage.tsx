@@ -1,3 +1,5 @@
+import WorkspaceOverview from '../components/WorkspaceOverview';
+import { jugadoresApi } from '../api/jugadores';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, ShoppingCart, Trophy, MessageSquare, Coins, TrendingUp, Gamepad2, Wallet, CheckCircle2, Clock, XCircle, Send } from 'lucide-react';
@@ -33,13 +35,14 @@ const DashboardPage: React.FC = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const [p, pur, f, sol] = await Promise.all([
+        const [p, pur, f, sol, ef] = await Promise.all([
           playersApi.getAll(0, 1),
           purchasesApi.getPurchases(),
           forumApi.getThreads(0, 1),
           saldoRequestsApi.getMine(),
+          jugadoresApi.getAll(0, 1),
         ]);
-        setStats({ players: p.totalElements, purchases: pur.length, threads: f.totalElements });
+        setStats({ players: p.totalElements + ef.totalElements, purchases: pur.length, threads: f.totalElements });
         setMySolicitudes(sol);
       } catch { /* fail silently */ }
       finally { setIsLoading(false); }
@@ -123,6 +126,7 @@ const DashboardPage: React.FC = () => {
         </div>
       </div>
 
+      <WorkspaceOverview />
       {/* Stats grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {statCards.map(({ icon: Icon, label, value, color, to }) => (

@@ -215,9 +215,9 @@ const PlayersPage: React.FC = () => {
   return (
     <Layout>
       {/* ─── Header ───────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div className="section-hero">
         <div>
-          <h1 className="text-3xl font-black text-white">Jugadores</h1>
+          <p className="eyebrow">FIFA × EFOOTBALL · MERCADO</p><h1>Encuentra tu próximo fichaje.</h1><p>Explora el rendimiento. Compara estadísticas. Construye tu equipo.</p>
           {activePaged && (
             <p className="text-gray-400 text-sm mt-1">
               {activePaged.totalElements} jugadores en {activeSection === 'FIFA' ? '⚽ FIFA' : '🎮 eFootball'}
@@ -225,7 +225,8 @@ const PlayersPage: React.FC = () => {
           )}
         </div>
 
-        {/* Botón agregar — disponible para todos los usuarios */}
+        {/* Gestión exclusiva del administrador */}
+        {isAdmin && (
         <button
           id="btn-add-player"
           onClick={handleOpenAdd}
@@ -238,7 +239,7 @@ const PlayersPage: React.FC = () => {
         >
           <Plus className="w-4 h-4" />
           Agregar Jugador
-        </button>
+        </button>)}
       </div>
 
       {/* ─── Tabs de sección ──────────────────────────────────────────────── */}
@@ -315,7 +316,7 @@ const PlayersPage: React.FC = () => {
       </div>
 
       {/* ─── Panel de ordenamiento ────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 flex-wrap mb-6">
+      <div className="catalogue-toolbar flex-wrap">
         <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide flex items-center gap-1 mr-1">
           <ArrowUpDown className="w-3.5 h-3.5" /> Ordenar:
         </span>
@@ -532,8 +533,8 @@ const PlayersPage: React.FC = () => {
                 <div key={player.id} className="relative group/card">
                   <PlayerCard player={player} />
                   {/* Controles en hover — botón stats para todos, eliminar solo admin */}
-                  {user && (
-                    <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity z-10">
+                  {isAdmin && (
+                    <div className="absolute top-3 right-3 flex gap-1 opacity-100 lg:opacity-0 group-hover/card:opacity-100 group-focus-within/card:opacity-100 transition-opacity z-10">
                       <button
                         onClick={(e) => { e.stopPropagation(); handleEditFifa(player); }}
                         className="p-1.5 rounded-lg text-white transition-all"

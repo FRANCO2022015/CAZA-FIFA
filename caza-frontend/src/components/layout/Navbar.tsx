@@ -1,3 +1,4 @@
+import RequestsLink from './RequestsLink';
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -35,7 +36,7 @@ const Navbar: React.FC = () => {
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden xl:flex items-center gap-1">
             {navItems.map(({ to, label, icon: Icon }) => {
               const active = location.pathname.startsWith(to);
               return (
@@ -57,7 +58,8 @@ const Navbar: React.FC = () => {
           </div>
 
           {/* Right side */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden xl:flex items-center gap-3">
+            <RequestsLink />
             {/* Cart */}
             <Link
               to="/cart"
@@ -89,7 +91,7 @@ const Navbar: React.FC = () => {
                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white" style={{ background: 'linear-gradient(135deg, #6C63FF, #FF6584)' }}>
                   {user?.nombre?.charAt(0).toUpperCase() ?? 'U'}
                 </div>
-                <span className="text-sm font-medium text-gray-300">{user?.nombre}</span>
+                <span className="text-sm font-medium text-gray-300 max-w-28 truncate">{user?.nombre}</span>
                 <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
               </button>
               {userMenuOpen && (
@@ -98,6 +100,8 @@ const Navbar: React.FC = () => {
                     <p className="text-sm font-medium text-white">{user?.nombre}</p>
                     <p className="text-xs text-gray-400 truncate">{user?.correo}</p>
                   </div>
+                  {user?.rol === 'ADMIN' && <Link to="/admin" className="block px-4 py-3 text-sm text-purple-300">Administración</Link>}
+                  <Link to="/purchases" className="block px-4 py-3 text-sm text-gray-300">Mis compras</Link>
                   <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors">
                     <LogOut className="w-4 h-4" />
                     Cerrar sesión
@@ -108,7 +112,7 @@ const Navbar: React.FC = () => {
           </div>
 
           {/* Mobile hamburger */}
-          <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
+          <button aria-label="Abrir navegación" aria-expanded={mobileOpen} onClick={() => setMobileOpen(!mobileOpen)} className="xl:hidden p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
             {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
@@ -116,7 +120,7 @@ const Navbar: React.FC = () => {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t animate-fadeIn" style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(13,13,26,0.98)' }}>
+        <div className="xl:hidden border-t animate-fadeIn" style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(13,13,26,0.98)' }}>
           <div className="px-4 py-3 space-y-1">
             {navItems.map(({ to, label, icon: Icon }) => (
               <Link
@@ -133,6 +137,8 @@ const Navbar: React.FC = () => {
               <ShoppingCart className="w-5 h-5" />
               Carrito {cartCount > 0 && <span className="ml-auto px-2 py-0.5 rounded-full text-xs font-bold text-white" style={{ background: '#FF6584' }}>{cartCount}</span>}
             </Link>
+            <RequestsLink />
+            {user?.rol === 'ADMIN' && <Link to="/admin" className="block p-3 text-purple-300">Administración</Link>}
             <hr style={{ borderColor: 'rgba(255,255,255,0.06)' }} />
             <div className="px-3 py-2 flex items-center gap-3">
               <Coins className="w-5 h-5 text-green-400" />

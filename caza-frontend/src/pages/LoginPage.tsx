@@ -79,7 +79,7 @@ const BattleBackground: React.FC = () => {
     const lerp  = (a: number, b: number, t: number) => a + (b - a) * t;
 
     const animate = (time: number) => {
-      animFrameRef.current = requestAnimationFrame(animate);
+      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) animFrameRef.current = requestAnimationFrame(animate);
       const dt = Math.min(time - lastTimeRef.current, 50);
       lastTimeRef.current = time;
       const W = canvas.width, H = canvas.height;
@@ -186,8 +186,11 @@ const BattleBackground: React.FC = () => {
       }
     };
 
+    const redrawStatic = () => { if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) animate(performance.now()); };
+    const fImage=fifaEl.current, eImage=efEl.current;
+    fImage?.addEventListener('load',redrawStatic); eImage?.addEventListener('load',redrawStatic);
     animFrameRef.current = requestAnimationFrame(animate);
-    return () => { cancelAnimationFrame(animFrameRef.current); ro.disconnect(); container.removeEventListener('mousemove', onMouseMove); };
+    return () => { fImage?.removeEventListener('load',redrawStatic); eImage?.removeEventListener('load',redrawStatic); cancelAnimationFrame(animFrameRef.current); ro.disconnect(); container.removeEventListener('mousemove', onMouseMove); };
   }, [spawnParticle]);
 
   return (
@@ -299,7 +302,7 @@ const LoginPage: React.FC = () => {
               </label>
               <div style={{ position: 'relative' }}>
                 <Mail style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: 'rgba(255,255,255,0.35)' }} />
-                <input type="email" value={correo} onChange={e => setCorreo(e.target.value)}
+                <input aria-label="Correo electrónico" autoComplete="email" type="email" value={correo} onChange={e => setCorreo(e.target.value)}
                   placeholder="tu@correo.com" required className="input-dark"
                   style={{ paddingLeft: '34px', fontSize: '0.85rem', width: '100%', boxSizing: 'border-box' }} />
               </div>
@@ -310,10 +313,10 @@ const LoginPage: React.FC = () => {
               </label>
               <div style={{ position: 'relative' }}>
                 <Lock style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: 'rgba(255,255,255,0.35)' }} />
-                <input type={showPassword ? 'text' : 'password'} value={password}
+                <input aria-label="Contraseña" autoComplete="current-password" type={showPassword ? 'text' : 'password'} value={password}
                   onChange={e => setPassword(e.target.value)} placeholder="••••••••" required className="input-dark"
                   style={{ paddingLeft: '34px', paddingRight: '36px', fontSize: '0.85rem', width: '100%', boxSizing: 'border-box' }} />
-                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                <button aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"} type="button" onClick={() => setShowPassword(!showPassword)}
                   style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', padding: 0, display: 'flex' }}>
                   {showPassword ? <EyeOff style={{ width: '16px', height: '16px' }} /> : <Eye style={{ width: '16px', height: '16px' }} />}
                 </button>

@@ -14,9 +14,9 @@ import java.util.*;
 @Component @RequiredArgsConstructor
 public class AuditConfig implements PostInsertEventListener, PostUpdateEventListener, PostDeleteEventListener {
  private final EntityManagerFactory emf;
- private static final Set<String> ENTITIES=Set.of("Player","Jugador","PlayerStats","Purchase","User","SaldoRequest","ForumThread","ForumPost","Comment","Meeting","Lineup");
+ private static final Set<String> ENTITIES=Set.of("Player","Jugador","PlayerStats","Purchase","User","SaldoRequest","ForumThread","ForumPost","Comment","Meeting","Lineup","PlayerChangeRequest");
  // Explicit allowlist: credentials and tokens can never enter this log.
- private static final Set<String> FIELDS=Set.of("nombre","nacionalidad","posicion","edad","precio","imagenUrl","hologramUrl","activo","goles","asistencias","partidos","partidosJugados","temporada","saldo","rol","precioTotal","itemsSnapshot","estado","monto","montoSolicitado","mensaje","fechaRespuesta","titulo","descripcion","contenido","rating","url","fechaInicio","fechaFin","tema","name","payload");
+ private static final Set<String> FIELDS=Set.of("nombre","nacionalidad","posicion","edad","precio","imagenUrl","hologramUrl","activo","goles","asistencias","partidos","partidosJugados","temporada","saldo","rol","precioTotal","itemsSnapshot","estado","monto","montoSolicitado","mensaje","fechaRespuesta","titulo","descripcion","contenido","rating","url","fechaInicio","fechaFin","tema","name","payload","requesterName","requesterId","reviewerName","reviewerId","reason","status","beforeValues","proposedValues","reviewNote");
  @PostConstruct public void register() {
    var r=emf.unwrap(SessionFactoryImplementor.class).getServiceRegistry().getService(EventListenerRegistry.class);
    r.appendListeners(EventType.POST_INSERT,this); r.appendListeners(EventType.POST_UPDATE,this); r.appendListeners(EventType.POST_DELETE,this);
@@ -41,7 +41,9 @@ public class AuditConfig implements PostInsertEventListener, PostUpdateEventList
    if(entity instanceof Jugador p) label=p.getNombre();
    if(entity instanceof PlayerStats s) label=s.getPlayer().getNombre()+" #"+s.getPlayer().getId()+" / "+s.getTemporada();
    if(entity instanceof Lineup l) label=l.getName();
+   if(entity instanceof PlayerChangeRequest r) { label="Solicitud #"+r.getId()+" / "+r.getPlayerName()+" / solicitante "+r.getRequesterName()+" #"+r.getRequesterId(); game=r.getGame(); }
    final String display=label;
+   final String auditGame=game;
    String[] names=persister.getPropertyNames();
    for(int i=0;i<names.length;i++) {
      String field=names[i];
@@ -55,7 +57,7 @@ public class AuditConfig implements PostInsertEventListener, PostUpdateEventList
        try(var stmt=connection.prepareStatement("INSERT INTO audit_events(actor_id,actor_name,entity_type,entity_id,entity_name,game,action,field_name,old_value,new_value) VALUES (?,?,?,?,?,?,?,?,?,?)")) {
          stmt.setObject(1,actor==null?null:actor.getId()); stmt.setString(2,actor==null?"Sistema":actor.getNombre());
          stmt.setString(3,type); stmt.setString(4,String.valueOf(id)); stmt.setString(5,display);
-         stmt.setString(6,game); stmt.setString(7,operation); stmt.setString(8,field);
+         stmt.setString(6,auditGame); stmt.setString(7,operation); stmt.setString(8,field);
          stmt.setString(9,before); stmt.setString(10,after); stmt.executeUpdate();
        }
      });

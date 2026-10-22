@@ -38,7 +38,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message }) => {
           <div className="glass-card px-4 py-3 text-sm text-gray-200 leading-relaxed whitespace-pre-wrap">
             {message.respuestaIA}
           </div>
-          <p className="text-xs text-gray-500 mt-1">{time} · Gemini AI</p>
+          <p className="text-xs text-gray-500 mt-1">{time} · CAZA</p>
         </div>
       </div>
     </div>

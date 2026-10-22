@@ -5,7 +5,7 @@ import {useAuth} from '../hooks/useAuth';
 import api from '../api/axiosConfig';
 import toast from 'react-hot-toast';
 type Row={id:number;occurred_at:string;actor_id:number|null;actor_name:string;entity_name:string;entity_type:string;entity_id:string;game:string|null;action:string;field_name:string;old_value:string|null;new_value:string|null};
-const fieldLabel=(field:string)=>({payload:'Alineación',name:'Nombre',imagenUrl:'Foto original',hologramUrl:'Recorte del holograma',itemsSnapshot:'Detalle de compra',partidosJugados:'Partidos',precioTotal:'Total de compra',montoSolicitado:'Saldo solicitado'} as Record<string,string>)[field]??field;
+const fieldLabel=(field:string)=>({requesterName:'Solicitante',requesterId:'ID del solicitante',reviewerName:'Administrador que resuelve',reviewerId:'ID del administrador',status:'Estado',reason:'Motivo',reviewNote:'Respuesta del administrador',beforeValues:'Valores al solicitar',proposedValues:'Propuesta',payload:'Alineación',name:'Nombre',imagenUrl:'Foto original',hologramUrl:'Recorte del holograma',itemsSnapshot:'Detalle de compra',partidosJugados:'Partidos',precioTotal:'Total de compra',montoSolicitado:'Saldo solicitado'} as Record<string,string>)[field]??field;
 const valueLabel=(field:string,value:string|null)=>{
  if(value===null)return '(vacío)';
  if(field==='activo')return value==='true'?'Activo':'Archivado';
@@ -17,6 +17,7 @@ const valueLabel=(field:string,value:string|null)=>{
      `${Number(slot)<11?`Titular ${Number(slot)+1}`:`Suplente ${Number(slot)-10}`}: ${p.nombre} (#${p.id})`).join('\n');
   }catch{return value;}
  }
+ if(field==='beforeValues'||field==='proposedValues'){try{return Object.entries(JSON.parse(value)).map(([k,v])=>`${fieldLabel(k)}: ${v||'(vacío)'}`).join('\n');}catch{return value;}}
  if(field==='itemsSnapshot'){
   try{return JSON.parse(value).map((p:any)=>`${p.nombre} · ${p.gameType} · ${p.cantidad??1} x $${p.precio}`).join('\n');}catch{return value;}
  }

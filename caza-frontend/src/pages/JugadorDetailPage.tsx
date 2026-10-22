@@ -1,3 +1,4 @@
+import RequestPlayerChange from '../components/players/RequestPlayerChange';
 import PlayerHologram from '../components/players/PlayerHologram';
 import PlayerStatsChart from '../components/players/PlayerStatsChart';
 import React, { useEffect, useState } from 'react';
@@ -170,6 +171,7 @@ const JugadorDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
+      <RequestPlayerChange player={jugador} game="EFOOTBALL" />
     </Layout>
   );
 };

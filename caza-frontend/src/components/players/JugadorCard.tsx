@@ -164,15 +164,15 @@ const JugadorCard: React.FC<JugadorCardProps> = ({ jugador, onEdit, onDelete }) 
             Ver
           </button>
 
-          {/* Actualizar stats — todos los usuarios */}
-          <button
+          {/* Edición solo para administrador; propuestas desde la ficha. */}
+          {isAdmin ? <button
             onClick={() => onEdit?.(jugador)}
             className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-medium text-gray-300 hover:text-white transition-all duration-200"
             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
           >
             <Pencil className="w-3.5 h-3.5" />
-            Actualizar Stats
-          </button>
+            Editar
+          </button> : <button className="btn-secondary text-xs flex-1" onClick={() => navigate(`/efootball/${jugador.id}`)}>Solicitar cambio</button>}
 
           {/* Archivar — solo admin */}
           {isAdmin && (
