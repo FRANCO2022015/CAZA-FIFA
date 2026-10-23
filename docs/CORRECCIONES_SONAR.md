@@ -25,3 +25,14 @@
 No requiere SQL, migraciones de datos ni cambios de variables en Neon. Publicar los cambios en main y comprobar Render, Vercel y un nuevo análisis de SonarCloud. Solo ese nuevo análisis puede confirmar el Quality Gate; las incidencias no se han marcado como aceptadas ni se han excluido archivos para ocultarlas.
 
 La instalación npm informó además 8 vulnerabilidades de dependencias (6 moderadas y 2 altas). No se han actualizado paquetes en esta corrección: requieren revisar npm audit y compatibilidad por separado.
+
+## Segunda revisión de incidencias
+
+- Salidas de migración limitadas a cuatro nombres fijos, comprobación de carpeta y enlaces, escritura temporal exclusiva y reemplazo atómico. Los datos del CSV no determinan nombres de salida.
+- Verificación de imágenes mediante conexión HTTPS a res.cloudinary.com fijo, ruta validada y rechazo de redirecciones. No se envían credenciales a esas comprobaciones.
+- Login administrador integrado con AuthContext, con verificación de rol antes de persistir la sesión. Eliminada la implementación duplicada del almacenamiento en la página.
+- Tipo submit del registro, promesas del constructor de equipos y Number.parseFloat corregidos.
+- Archivos de pruebas declarados en sonar.tests con inclusiones y separación de fuentes; no se desactivan reglas de seguridad.
+- Validación: build frontend correcto, 6 pruebas Python aprobadas y 1 omitida por permisos de enlaces simbólicos en Windows; 4 escenarios de sesión en navegador con API simulada. No se ejecutaron migraciones ni peticiones a producción.
+
+Esta revisión solo requiere publicar frontend y código para el análisis; no cambia el backend ni el esquema de Neon. El Quality Gate debe confirmarse con un nuevo análisis remoto.

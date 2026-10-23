@@ -1,3 +1,4 @@
+import { positionBadgeClass } from '../../utils/efootballPositions';
 import React, { useState } from 'react';
 import { Gamepad2, Trophy, Star, Trash2, Pencil, ShoppingCart, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -36,12 +37,12 @@ const JugadorCard: React.FC<JugadorCardProps> = ({ jugador, onEdit, onDelete }) 
           <div className="w-full h-44 rounded-xl overflow-hidden flex items-center justify-center"
             style={{ background: 'linear-gradient(135deg, rgba(255,140,0,0.15), rgba(255,69,0,0.1))' }}>
             {jugador.imagenUrl && failedImage !== jugador.imagenUrl ? (
-              <img src={jugador.imagenUrl} alt={jugador.nombre} className="w-full h-full object-cover"
+              <img src={jugador.imagenUrl} alt={jugador.nombre} className="w-full h-full object-contain"
                 loading="lazy" onError={() => setFailedImage(jugador.imagenUrl ?? null)} />
             ) : <Gamepad2 className="w-14 h-14 text-orange-400/60" aria-hidden="true" />}
           </div>
-          <span className="absolute top-3 left-3 px-2 py-1 rounded-lg text-xs font-bold text-orange-300 bg-orange-950/80 border border-orange-400/30">
-            eFootball
+          <span className={`absolute top-3 left-3 px-2 py-1 rounded-lg text-xs font-bold border ${positionBadgeClass(jugador.posicion)}`}>
+            {jugador.posicion ?? 'Sin posición'}
           </span>
           {jugador.precio != null && (
             <span className="absolute bottom-3 right-3 px-3 py-1 rounded-lg text-sm font-bold text-white"

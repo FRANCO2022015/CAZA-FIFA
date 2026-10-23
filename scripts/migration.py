@@ -4,7 +4,7 @@ Restore refuses any nonempty public schema. Images generates SQL, never applies 
 """
 import argparse, csv, getpass, hashlib, json, os, pathlib, re, shutil, subprocess, sys, time
 import urllib.request, urllib.parse
-from safe_inputs import HTTP, image_inventory, select_image, cloud_image_url
+from safe_inputs import HTTP, image_inventory, select_image, cloud_image_url, check_cloud_image, ImageOutputs
 
 def pg(name):
     return str(pathlib.Path(args.pg_bin)/(name+'.exe' if os.name=='nt' else name)) if args.pg_bin else name
@@ -80,9 +80,8 @@ def images():
     key=os.getenv('CLOUDINARY_API_KEY') or getpass.getpass('Cloudinary API key: ')
     secret=os.getenv('CLOUDINARY_API_SECRET') or getpass.getpass('Cloudinary API secret: ')
     if not re.fullmatch(r'[A-Za-z0-9_-]+',cloud): raise ValueError('Invalid cloud name')
-    out=pathlib.Path(args.output); out.mkdir(parents=True,exist_ok=True)
-    journal=out/'image-manifest.json'
-    manifest=json.loads(journal.read_text()) if journal.exists() else {}
+    output=ImageOutputs(args.output)
+    manifest=output.read_manifest()
     updates=[]; reverse=[]
     for r,path in local:
         digest=hashlib.sha256(path.read_bytes()).hexdigest()
@@ -100,18 +99,16 @@ def images():
             with HTTP.open(req,timeout=90) as response: data=json.load(response)
             url=cloud_image_url(data['secure_url'],cloud)
             manifest[identity]={'file':path.name,'sha256':digest,'url':url,'public_id':data['public_id']}
-            temporary=journal.with_suffix('.tmp'); temporary.write_text(json.dumps(manifest,indent=2),encoding='utf-8'); temporary.replace(journal)
-        url=cloud_image_url(manifest[identity]['url'],cloud)
-        # Confirm URL is available before emitting a DB change.
-        with HTTP.open(urllib.request.Request(url,method='HEAD'),timeout=30) as response:
-            if not response.headers.get('Content-Type','').startswith('image/'): raise ValueError('URL is not an image')
+            output.write('image-manifest.json',json.dumps(manifest,indent=2))
+        # Confirm the approved Cloudinary resource without following redirects.
+        url=check_cloud_image(manifest[identity]['url'],cloud)
         table=r['tabla']; rid=r['id']; old=r['imagen_url']
         updates.append(f"DO $$ BEGIN UPDATE public.{table} SET imagen_url={quote(url)} WHERE id={rid} AND imagen_url={quote(old)}; IF NOT FOUND THEN RAISE EXCEPTION 'Image mapping mismatch: {table}/{rid}'; END IF; END $$;")
         reverse.append(f"UPDATE public.{table} SET imagen_url={quote(old)} WHERE id={rid} AND imagen_url={quote(url)};")
-    (out/'apply-images.sql').write_text('BEGIN;\n'+'\n'.join(updates)+'\nCOMMIT;\n',encoding='utf-8')
-    (out/'rollback-images.sql').write_text('BEGIN;\n'+'\n'.join(reverse)+'\nCOMMIT;\n',encoding='utf-8')
+    output.write('apply-images.sql','BEGIN;\n'+'\n'.join(updates)+'\nCOMMIT;\n')
+    output.write('rollback-images.sql','BEGIN;\n'+'\n'.join(reverse)+'\nCOMMIT;\n')
     mapping={r['imagen_url']:manifest[cloud+':'+hashlib.sha256(p.read_bytes()).hexdigest()]['url'] for r,p in local}
-    (out/'image-url-map.json').write_text(json.dumps(mapping,indent=2),encoding='utf-8')
+    output.write('image-url-map.json',json.dumps(mapping,indent=2))
     print('Uploads verified. SQL and URL map generated; database NOT changed. Apply only to your restored cloud database.')
 
 parser=argparse.ArgumentParser(description=__doc__)

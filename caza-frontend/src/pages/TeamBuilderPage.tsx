@@ -427,7 +427,7 @@ const TeamBuilderPage: React.FC=()=>{
    setReady(true);
   }catch{setError('No se pudieron cargar tus equipos. Reintenta antes de editar.');}
  };
- useEffect(()=>{load()},[user?.id]);
+ useEffect(()=>{void load()},[user?.id]);
  // A single in-flight request. Edits made during a save are sent afterwards using the new version.
  useEffect(()=>{
   if(!ready||!dirty||saving||conflict||error||snapshot===last)return;
@@ -510,7 +510,7 @@ const TeamBuilderPage: React.FC=()=>{
   {error&&<div role="alert" className="glass-card p-4 border border-red-400 mb-5"><p>{error}</p><div className="flex gap-4 mt-3">
    {!conflict&&<button onClick={()=>setError('')}>Reintentar guardado</button>}
    <button disabled={saving} onClick={()=>{setId(crypto.randomUUID());setVersion(null);setLast('');setConflict(false);setError('');setDirty(true)}}>Guardar como copia nueva</button>
-   <button onClick={()=>{if(canLeave())load()}}>Recargar desde la nube</button></div></div>}
+   <button onClick={()=>{if(canLeave())void load()}}>Recargar desde la nube</button></div></div>}
   <div className="grid lg:grid-cols-[300px_1fr] gap-6">
    <aside className="space-y-5">
     <div className="glass-card p-5 space-y-4">

@@ -1,3 +1,4 @@
+import { EFOOTBALL_POSITIONS, type EfootballPosition } from '../../utils/efootballPositions';
 import {useEffect,useRef,useState} from 'react';
 import {X,Plus,Save} from 'lucide-react';
 import type {Player,Jugador,PlayerStats} from '../../types';
@@ -13,6 +14,7 @@ const blankSeason=():Season=>({temporada:'',goles:0,asistencias:0,partidosJugado
 const initial=()=>({nombre:'',nacionalidad:'',posicion:'DELANTERO' as Player['posicion'],edad:22,precio:500,partidos:0,goles:0,asistencias:0,imagenUrl:'',hologramUrl:''});
 export default function AddPlayerModal({isOpen,section,editingPlayer,editingJugador,onClose,onSuccess}:Props){
  const {user}=useAuth();const [form,setForm]=useState(initial);
+ const [efPosition,setEfPosition]=useState<EfootballPosition | ''>('');
  const [seasons,setSeasons]=useState<Season[]>([]);
  const [busy,setBusy]=useState(false),[dirty,setDirty]=useState(false);
  const [errors,setErrors]=useState<Record<string,string>>({});
@@ -24,7 +26,8 @@ export default function AddPlayerModal({isOpen,section,editingPlayer,editingJuga
  useEffect(()=>{
   if(!isOpen)return;
   const p=editingPlayer??editingJugador;
-  setForm({...initial(),...p,imagenUrl:p?.imagenUrl??'',hologramUrl:p?.hologramUrl??''});
+  setEfPosition(editingJugador?.posicion??'');
+  setForm({...initial(),...p,posicion:editingPlayer?.posicion??'DELANTERO',imagenUrl:p?.imagenUrl??'',hologramUrl:p?.hologramUrl??''});
   setSeasons(editingPlayer?.stats?.map(s=>({...s}))??[]);
   setDirty(false);setErrors({});
   const previous=document.activeElement as HTMLElement|null;
@@ -68,7 +71,8 @@ export default function AddPlayerModal({isOpen,section,editingPlayer,editingJuga
      await playersApi.create({...form,initialStats:seasons[0]});
     }
    }else{
-    if(editingJugador)await jugadoresApi.update(editingJugador.id,form);else await jugadoresApi.create(form);
+    const payload={...form,posicion:efPosition};
+    if(editingJugador)await jugadoresApi.update(editingJugador.id,payload);else await jugadoresApi.create(payload);
    }
    setDirty(false);toast.success('Jugador y estadísticas guardados');onSuccess();onClose();
   }catch(err:any){
@@ -92,6 +96,13 @@ export default function AddPlayerModal({isOpen,section,editingPlayer,editingJuga
     <fieldset disabled={busy} className="space-y-6">
      <section><h3 className="font-bold mb-3">Información general</h3><div className="grid sm:grid-cols-2 gap-4">
       {field('nombre','Nombre')}{field('precio','Precio','number',0,500)}
+      {section==='EFOOTBALL'&&<label className="text-sm">Posición
+       <select className="input-dark mt-1" value={efPosition} aria-invalid={!!errors.posicion}
+        onChange={e=>{setEfPosition(e.target.value as EfootballPosition | '');setDirty(true);setErrors(v=>({...v,posicion:''}));}}>
+        <option value="">Sin posición</option>
+        {EFOOTBALL_POSITIONS.map(position=><option key={position} value={position}>{position}</option>)}
+       </select>{errors.posicion&&<span className="text-red-300 text-xs">{errors.posicion}</span>}
+      </label>}
       {section==='FIFA'&&<>{field('nacionalidad','Nacionalidad')}{field('edad','Edad','number',16,45)}
        <label className="text-sm">Posición<select className="input-dark mt-1" value={form.posicion} onChange={e=>change('posicion',e.target.value)}>
         {['PORTERO','DEFENSA','CENTROCAMPISTA','DELANTERO'].map(p=><option key={p}>{p}</option>)}</select></label></>}

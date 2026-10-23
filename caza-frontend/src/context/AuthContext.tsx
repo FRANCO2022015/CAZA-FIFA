@@ -9,6 +9,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (data: LoginRequest) => Promise<void>;
+  loginAdmin: (data: LoginRequest) => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => void;
   updateBalance: (newBalance: number) => void;
@@ -62,6 +63,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     persistSession(response);
   }, []);
 
+  const loginAdmin = useCallback(async (data: LoginRequest) => {
+    const response = await authApi.login(data);
+    if (response.rol !== 'ADMIN') throw new Error('Acceso de administrador requerido');
+    persistSession(response);
+  }, []);
+
   const register = useCallback(async (data: RegisterRequest) => {
     const response = await authApi.register(data);
     persistSession(response);
@@ -92,6 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!token,
         isLoading,
         login,
+        loginAdmin,
         register,
         logout,
         updateBalance,

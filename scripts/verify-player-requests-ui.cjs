@@ -11,7 +11,7 @@ const fs=require('fs'),path=require('path'),assert=require('assert');
   const publicContext=await browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'reduce'});
   const reg=await publicContext.newPage();await reg.goto('http://127.0.0.1:5173/register');await reg.getByLabel('Nombre completo',{exact:true}).fill('Lionel');await reg.getByLabel('Correo electrónico',{exact:true}).fill('lionel@example.com');
   assert(!/Gemini|Géminis|Chat IA/.test(await reg.locator('body').innerText()));
-  for(const input of await reg.locator('.field-with-icon input').all())assert(await input.evaluate(el=>parseFloat(getComputedStyle(el).paddingLeft)>=44));
+  for(const input of await reg.locator('.field-with-icon input').all())assert(await input.evaluate(el=>Number.parseFloat(getComputedStyle(el).paddingLeft)>=44));
   await reg.screenshot({path:path.join(out,'registro.png'),fullPage:true});
   await reg.setViewportSize({width:390,height:844});await reg.getByLabel('Contraseña',{exact:true}).fill('abcdef12');await reg.getByLabel('Confirmar contraseña',{exact:true}).fill('abcdef13');await reg.getByText('Las contraseñas no coinciden.',{exact:true}).waitFor();
   assert(await reg.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));await reg.screenshot({path:path.join(out,'registro-movil.png'),fullPage:true});

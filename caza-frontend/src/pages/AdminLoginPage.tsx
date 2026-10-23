@@ -1,11 +1,12 @@
-import { validateToken } from '../utils/sessionValidation';
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail, ArrowLeft, ShieldCheck } from 'lucide-react';
-import { authApi } from '../api/auth';
+import { useAuthContext } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
 const AdminLoginPage: React.FC = () => {
+  const { loginAdmin } = useAuthContext();
+  const navigate = useNavigate();
   const [correo, setCorreo] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -15,26 +16,9 @@ const AdminLoginPage: React.FC = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      // Llamar directamente a la API — obtenemos la respuesta completa con el rol
-      const response = await authApi.login({ correo, password });
-
-      // Verificar el rol ANTES de persistir la sesión
-      if (response.rol !== 'ADMIN') {
-        toast.error('⛔ No tienes permisos de administrador');
-        setIsLoading(false);
-        return;
-      }
-
-      const token = validateToken(response.accessToken);
-      localStorage.setItem('caza_token', token);
-      localStorage.removeItem('caza_user');
-
-      toast.success(`¡Bienvenido, Admin ${response.nombre}! ⭐`);
-
-      // Redirigir con recarga completa — el AuthContext leerá el token del localStorage
-      setTimeout(() => {
-        window.location.href = '/admin';
-      }, 600);
+      await loginAdmin({ correo, password });
+      toast.success('¡Bienvenido al panel de administración!');
+      navigate('/admin');
 
     } catch {
       toast.error('Credenciales incorrectas o error del servidor');

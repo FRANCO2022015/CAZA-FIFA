@@ -27,6 +27,9 @@ public class Jugador {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String nombre;
 
+    @Column(length = 3)
+    private String posicion;
+
     // ── Columnas que el usuario escribe ───────────────────────────────────────
 
     @Column(nullable = false)

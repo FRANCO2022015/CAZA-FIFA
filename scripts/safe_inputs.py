@@ -56,3 +56,64 @@ def local_api_url(base, path):
         raise ValueError('Unexpected API route')
     port = parsed.port or 80
     return f'http://127.0.0.1:{port}/api' + route.path + ('?' + route.query if route.query else '')
+
+
+def check_cloud_image(value, cloud=None):
+    """HEAD against a fixed HTTPS origin; never follow redirects from stored data."""
+    import http.client
+    url = cloud_image_url(value, cloud)
+    target = urllib.parse.urlsplit(url).path
+    connection = http.client.HTTPSConnection('res.cloudinary.com', timeout=30)
+    try:
+        connection.request('HEAD', target)
+        response = connection.getresponse()
+        if response.status != 200 or not response.getheader('Content-Type', '').startswith('image/'):
+            raise ValueError('Cloudinary image is unavailable or not an image')
+    finally:
+        connection.close()
+    return url
+
+
+class ImageOutputs:
+    """Fixed filenames, confined directory and exclusive temporary files for output."""
+    names = frozenset(('image-manifest.json', 'apply-images.sql', 'rollback-images.sql', 'image-url-map.json'))
+
+    def __init__(self, directory):
+        import os
+        candidate = pathlib.Path(directory).absolute()
+        import stat
+        for part in (candidate, *candidate.parents):
+            if part.is_symlink():
+                raise ValueError('Output directory must not contain links')
+            if part.exists() and getattr(part.lstat(), 'st_file_attributes', 0) & getattr(stat, 'FILE_ATTRIBUTE_REPARSE_POINT', 0):
+                raise ValueError('Output directory must not contain reparse points')
+        candidate.mkdir(parents=True, exist_ok=True)
+        self.root = candidate.resolve(strict=True)
+
+    def path(self, name):
+        if name not in self.names:
+            raise ValueError('Unexpected output filename')
+        target = self.root / name
+        if target.is_symlink() or target.resolve().parent != self.root:
+            raise ValueError('Output file escapes the selected directory')
+        return target
+
+    def read_manifest(self):
+        import json
+        target = self.path('image-manifest.json')
+        return json.loads(target.read_text(encoding='utf-8')) if target.exists() else {}
+
+    def write(self, name, content):
+        import os
+        import tempfile
+        target = self.path(name)
+        # mkstemp creates a new file exclusively; an existing link cannot redirect it.
+        descriptor, temporary = tempfile.mkstemp(prefix='.caza-', dir=self.root)
+        try:
+            with os.fdopen(descriptor, 'w', encoding='utf-8') as output:
+                output.write(content)
+            self.path(name)
+            os.replace(temporary, target)
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)

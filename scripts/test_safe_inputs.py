@@ -1,7 +1,7 @@
 import tempfile
 import unittest
 from pathlib import Path
-from safe_inputs import image_inventory, select_image, cloud_image_url, local_api_url, NoRedirect
+from safe_inputs import image_inventory, select_image, cloud_image_url, local_api_url, NoRedirect, ImageOutputs, check_cloud_image
 
 class InputBoundariesTest(unittest.TestCase):
     def test_images_only_from_inventory(self):
@@ -28,5 +28,40 @@ class InputBoundariesTest(unittest.TestCase):
         with self.assertRaises(ValueError): local_api_url('https://caza-fifa.onrender.com/api', '/players')
     def test_redirects_are_rejected(self):
         with self.assertRaises(ValueError): NoRedirect().redirect_request(None, None, 302, '', {}, 'http://localhost')
+
+class OutputBoundaryTest(unittest.TestCase):
+    def test_fixed_names_and_atomic_replacement(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = ImageOutputs(directory)
+            output.write('apply-images.sql', 'first')
+            output.write('apply-images.sql', 'second')
+            self.assertEqual((Path(directory) / 'apply-images.sql').read_text(), 'second')
+            for name in ('../escape.sql', '/escape.sql', 'other.sql'):
+                with self.assertRaises(ValueError): output.write(name, 'blocked')
+            self.assertEqual(list(Path(directory).glob('.caza-*')), [])
+
+    def test_symlink_output_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            target = root / 'outside.txt'
+            target.write_text('unchanged')
+            output = ImageOutputs(root / 'outputs')
+            try: (output.root / 'apply-images.sql').symlink_to(target)
+            except OSError: self.skipTest('OS does not allow symlinks for this account')
+            with self.assertRaises(ValueError): output.write('apply-images.sql', 'blocked')
+            self.assertEqual(target.read_text(), 'unchanged')
+
+    def test_image_check_fixed_origin_and_redirect_rejection(self):
+        from unittest.mock import patch
+        with patch('http.client.HTTPSConnection') as client:
+            response = client.return_value.getresponse.return_value
+            response.status = 200
+            response.getheader.return_value = 'image/png'
+            url = 'https://res.cloudinary.com/caza/image/upload/v1/photo.png'
+            self.assertEqual(check_cloud_image(url), url)
+            client.assert_called_with('res.cloudinary.com', timeout=30)
+            client.return_value.request.assert_called_with('HEAD', '/caza/image/upload/v1/photo.png')
+            response.status = 302
+            with self.assertRaises(ValueError): check_cloud_image(url)
 
 if __name__ == '__main__': unittest.main()

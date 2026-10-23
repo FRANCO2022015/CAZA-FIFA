@@ -1,5 +1,5 @@
 """Read-only cloud smoke test. Never creates users, purchases or balance changes."""
-from safe_inputs import HTTP, cloud_image_url
+from safe_inputs import HTTP, check_cloud_image
 import argparse, getpass, json, urllib.request, urllib.error
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument('--api',required=True,help='https://your-backend.onrender.com/api')
@@ -23,9 +23,7 @@ for kind in ('players','jugadores'):
         count+=len(data['content']);page+=1
         if page>=data['totalPages']:break
     for url in images:
-        url=cloud_image_url(url)
-        with HTTP.open(urllib.request.Request(url,method='HEAD'),timeout=30) as r:
-            assert r.headers.get('Content-Type','').startswith('image/'),'Not an image'
+        check_cloud_image(url)
     print(f'PASS: {kind}, {count} records, {len(images)} accessible HTTPS images')
 if a.email:
     auth=request('/auth/login',data={'correo':a.email,'password':getpass.getpass('Password: ')})

@@ -1,3 +1,4 @@
+import { positionBadgeClass } from '../utils/efootballPositions';
 import RequestPlayerChange from '../components/players/RequestPlayerChange';
 import PlayerHologram from '../components/players/PlayerHologram';
 import PlayerStatsChart from '../components/players/PlayerStatsChart';
@@ -103,6 +104,9 @@ const JugadorDetailPage: React.FC = () => {
               🎮 eFootball
             </span>
 
+            <span className={`px-3 py-1 rounded-lg text-sm font-bold border mb-4 ${positionBadgeClass(jugador.posicion)}`}>
+              {jugador.posicion ?? 'Sin posición'}
+            </span>
             {/* Precio */}
             {jugador.precio != null && (
               <>

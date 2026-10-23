@@ -1,8 +1,10 @@
+import type { EfootballPosition } from '../utils/efootballPositions';
 import axiosInstance from './axiosConfig';
 import type { ApiResponse, PagedResponse, Jugador, JugadorSearchParams } from '../types';
 
 // Solo los campos que el usuario introduce — el resto se calcula en el backend
 export interface JugadorCreatePayload {
+  posicion?: EfootballPosition | '';
   nombre: string;
   partidos: number;
   goles: number;

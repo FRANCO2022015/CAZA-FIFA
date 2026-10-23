@@ -15,6 +15,7 @@ public class JugadorResponse {
 
     private Long id;
     private String nombre;
+    private String posicion;
     private Integer partidos;
     private Integer goles;
     private Integer asistencias;

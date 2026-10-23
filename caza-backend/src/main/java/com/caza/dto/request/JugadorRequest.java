@@ -32,7 +32,11 @@ public record JugadorRequest(
 
         @Size(max = 500)
         @Pattern(regexp = "^$|^https://[^\\s]+$|^http://(?:127\\.0\\.0\\.1|localhost)(?::[0-9]+)?/[^\\s]*$", message = "Usa una URL HTTPS para el recorte")
-        String hologramUrl
+        String hologramUrl,
+
+        @Pattern(regexp = "^(?:PO|DEF|LI|LD|MC|MCD|MO|MDI|MDD|EXI|EXD|DC|SD)?$",
+                message = "Selecciona una posición válida de eFootball")
+        String posicion
 
         // GA, PG, PA y PGA son columnas GENERATED ALWAYS en PostgreSQL — las calcula Postgres
 ) {}

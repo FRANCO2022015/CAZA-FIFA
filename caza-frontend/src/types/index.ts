@@ -1,3 +1,4 @@
+import type { EfootballPosition } from '../utils/efootballPositions';
 export interface User {
   id: number;
   nombre: string;
@@ -150,6 +151,7 @@ export interface PlayerSearchParams {
 // ─── eFootball ────────────────────────────────────────────────────────────────
 
 export interface Jugador {
+  posicion?: EfootballPosition | null;
   id: number;
   nombre: string;
   partidos: number;

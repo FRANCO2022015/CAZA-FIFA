@@ -93,6 +93,7 @@ public class JugadorServiceImpl implements JugadorService {
         // ga, pg, pa y pga son GENERATED ALWAYS en PostgreSQL — las calcula Postgres sola.
         Jugador jugador = Jugador.builder()
                 .nombre(request.nombre())
+                .posicion(request.posicion() == null || request.posicion().isEmpty() ? null : request.posicion())
                 .partidos(request.partidos())
                 .goles(request.goles())
                 .asistencias(request.asistencias())
@@ -113,6 +114,8 @@ public class JugadorServiceImpl implements JugadorService {
         // Solo actualizamos las columnas normales.
         // Postgres recalcula ga/pg/pa/pga automáticamente al hacer el UPDATE.
         if (request.hologramUrl() != null) jugador.setHologramUrl(request.hologramUrl());
+        // Missing field from older clients preserves the position; empty clears it.
+        if (request.posicion() != null) jugador.setPosicion(request.posicion().isEmpty() ? null : request.posicion());
         jugador.setNombre(request.nombre());
         jugador.setPartidos(request.partidos());
         jugador.setGoles(request.goles());
@@ -145,6 +148,7 @@ public class JugadorServiceImpl implements JugadorService {
         return JugadorResponse.builder()
                 .id(j.getId())
                 .nombre(j.getNombre())
+                .posicion(j.getPosicion())
                 .partidos(j.getPartidos())
                 .goles(j.getGoles())
                 .asistencias(j.getAsistencias())
