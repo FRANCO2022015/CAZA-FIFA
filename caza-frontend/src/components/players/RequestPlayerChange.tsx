@@ -27,7 +27,7 @@ export default function RequestPlayerChange({player,game}:{player:Player|Jugador
  return <section className="request-panel mt-6">
   <div className="flex flex-wrap items-center justify-between gap-3">
    <div><p className="eyebrow">DATOS EN EQUIPO</p><h2 className="font-semibold text-lg mt-1">¿Hay algo que corregir?</h2><p className="text-sm text-gray-400 mt-1">Propón una actualización. El administrador revisará los cambios.</p></div>
-   <button className="btn-secondary" onClick={()=>setOpen(!open)} aria-expanded={open}><Send size={16}/> Solicitar cambio <ChevronDown size={16}/></button>
+   <button type="button" className="btn-secondary" onClick={()=>setOpen(!open)} aria-expanded={open}><Send size={16}/> Solicitar cambio <ChevronDown size={16}/></button>
   </div>
   {sent&&<p role="status" className="text-emerald-300 text-sm mt-4">Solicitud pendiente. <Link className="underline" to="/requests">Ver mis solicitudes</Link></p>}
   {open&&<form onSubmit={submit} className="mt-6 space-y-5">
@@ -44,7 +44,7 @@ export default function RequestPlayerChange({player,game}:{player:Player|Jugador
    </fieldset>
    <label className="block text-sm">Motivo de la corrección<textarea className="input-dark mt-2" rows={3} minLength={5} maxLength={1000} required disabled={busy} value={reason} onChange={e=>setReason(e.target.value)} placeholder="Explica de dónde provienen los nuevos datos…"/></label>
    {error&&<p role="alert" className="text-rose-300">{error}</p>}
-   <div className="flex flex-wrap gap-3"><button className="btn-primary" disabled={busy}>{busy?'Enviando…':'Enviar propuesta'}</button><button className="btn-secondary" type="button" disabled={busy} onClick={()=>setOpen(false)}>Cerrar</button></div>
+   <div className="flex flex-wrap gap-3"><button type="submit" className="btn-primary" disabled={busy}>{busy?'Enviando…':'Enviar propuesta'}</button><button className="btn-secondary" type="button" disabled={busy} onClick={()=>setOpen(false)}>Cerrar</button></div>
   </form>}
  </section>;
 }

@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { validateUser, validateToken } from '../utils/sessionValidation';
 import { authApi } from '../api/auth';
 import type { AuthResponse, LoginRequest, RegisterRequest, User } from '../types';
 
@@ -20,28 +21,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Restore session from localStorage on mount
+  // Never trust cached profile/role data. Resolve the identity through the API.
   useEffect(() => {
-    const storedToken = localStorage.getItem('caza_token');
-    const storedUser = localStorage.getItem('caza_user');
-    if (storedToken && storedUser) {
+    let active = true;
+    localStorage.removeItem('caza_user');
+    const restore = async () => {
       try {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
-        authApi.getMe().then(fresh => {
-          setUser(fresh);
-          localStorage.setItem('caza_user', JSON.stringify(fresh));
-        }).catch(() => { /* API interceptor handles an expired token. */ });
+        const stored = localStorage.getItem('caza_token');
+        if (!stored) return;
+        const validToken = validateToken(stored);
+        const fresh = validateUser(await authApi.getMe());
+        if (active) { setToken(validToken); setUser(fresh); }
       } catch {
-        localStorage.removeItem('caza_token');
-        localStorage.removeItem('caza_user');
-      }
-    }
-    setIsLoading(false);
+        // A failed restoration does not authorize the cached identity.
+        if (active) { setToken(null); setUser(null); }
+      } finally { if (active) setIsLoading(false); }
+    };
+    void restore();
+    return () => { active = false; };
   }, []);
 
   const persistSession = (authResponse: AuthResponse) => {
-    const userData: User = {
+    const validToken = validateToken(authResponse.accessToken);
+    const userData = validateUser({
       id: authResponse.userId,
       nombre: authResponse.nombre,
       correo: authResponse.correo,
@@ -49,10 +51,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       saldo: authResponse.saldo,
       fechaRegistro: new Date().toISOString(),
       activo: true,
-    };
-    localStorage.setItem('caza_token', authResponse.accessToken);
-    localStorage.setItem('caza_user', JSON.stringify(userData));
-    setToken(authResponse.accessToken);
+    });
+    localStorage.setItem('caza_token', validToken);
+    setToken(validToken);
     setUser(userData);
   };
 
@@ -75,10 +76,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const updateBalance = useCallback((newBalance: number) => {
+    if (!Number.isFinite(newBalance) || newBalance < 0) return;
     setUser((prev) => {
       if (!prev) return prev;
       const updated = { ...prev, saldo: newBalance };
-      localStorage.setItem('caza_user', JSON.stringify(updated));
       return updated;
     });
   }, []);

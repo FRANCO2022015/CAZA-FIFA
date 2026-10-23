@@ -14,7 +14,7 @@ interface ImageUploaderProps {
   onBusyChange?: (busy:boolean)=>void;
 }
 
-const MAX_MB = 10;
+const MAX_MB = 7;
 const ALLOWED = ['image/jpeg', 'image/png', 'image/webp'];
 
 const ImageUploader: React.FC<ImageUploaderProps> = ({
@@ -70,7 +70,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) processFile(file);
+    if (file && !loading) void processFile(file);
     // Reset input so el mismo archivo puede volver a seleccionarse
     e.target.value = '';
   };
@@ -79,7 +79,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     e.preventDefault();
     setDragging(false);
     const file = e.dataTransfer.files[0];
-    if (file) processFile(file);
+    if (file && !loading) void processFile(file);
   };
 
   const handleClear = () => {
@@ -104,6 +104,11 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
       {/* Área de drop / preview */}
       <div
+        role="button"
+        tabIndex={loading ? -1 : 0}
+        aria-label="Seleccionar imagen del jugador"
+        aria-disabled={loading}
+        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!loading) inputRef.current?.click(); } }}
         onClick={() => !loading && inputRef.current?.click()}
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}

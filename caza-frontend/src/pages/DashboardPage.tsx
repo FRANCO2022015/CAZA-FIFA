@@ -47,7 +47,7 @@ const DashboardPage: React.FC = () => {
       } catch { /* fail silently */ }
       finally { setIsLoading(false); }
     };
-    load();
+    void load();
   }, []);
 
   const handleSendRequest = async (e: React.FormEvent) => {
@@ -187,10 +187,10 @@ const DashboardPage: React.FC = () => {
                 style={{ background: 'rgba(67,233,123,0.06)', border: '1px solid rgba(67,233,123,0.15)' }}>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">
+                <label htmlFor="dashboardpage-field-1" className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">
                   Monto solicitado *
                 </label>
-                <input
+                <input id="dashboardpage-field-1"
                   type="number" min={1} required
                   placeholder="Ej: 5000"
                   value={requestMonto}
@@ -200,10 +200,10 @@ const DashboardPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">
+                <label htmlFor="dashboardpage-field-2" className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">
                   Mensaje (opcional)
                 </label>
-                <input
+                <input id="dashboardpage-field-2"
                   type="text" maxLength={300}
                   placeholder="¿Por qué necesitas más saldo?"
                   value={requestMensaje}

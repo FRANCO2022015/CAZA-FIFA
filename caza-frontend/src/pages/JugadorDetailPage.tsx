@@ -18,7 +18,7 @@ import toast from 'react-hot-toast';
 const fmt = (v: number | undefined | null): string => {
   if (v == null) return '—';
   const n = Number(v);
-  return isNaN(n) ? '—' : n.toFixed(2).replace(/\.?0+$/, '') || '0';
+  return !Number.isFinite(n) ? '—' : String(Number(n.toFixed(2)));
 };
 
 const JugadorDetailPage: React.FC = () => {
@@ -43,7 +43,7 @@ const JugadorDetailPage: React.FC = () => {
         setIsLoading(false);
       }
     };
-    load();
+    void load();
   }, [id, navigate]);
 
   const handleAddToCart = async () => {

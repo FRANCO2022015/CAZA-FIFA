@@ -76,13 +76,13 @@ export default function AuditPage(){
  if(user?.rol!=='ADMIN')return <Navigate to="/dashboard" replace/>;
  return <Layout><Link to="/admin" className="text-purple-300">← Administración</Link>
   <div className="flex flex-wrap justify-between gap-4 my-6"><div><h1 className="text-3xl font-black">Historial de cambios</h1><p className="text-gray-400 mt-2">Operaciones guardadas desde la activación de la auditoría. Hora de Perú.</p></div>
-   <button className="btn-primary" onClick={download} disabled={exporting}>{exporting?'Generando PDF…':'Descargar PDF con estos filtros'}</button></div>
+   <button type="button" className="btn-primary" onClick={download} disabled={exporting}>{exporting?'Generando PDF…':'Descargar PDF con estos filtros'}</button></div>
   <form className="glass-card p-4 grid sm:grid-cols-3 gap-4 mb-6" onSubmit={e=>{e.preventDefault();setPage(0);setApplied({...filters});}}>
    {(['from','to','actor','player'] as const).map(k=><label key={k} className="text-sm text-gray-300">{({from:'Desde',to:'Hasta',actor:'ID de usuario',player:'Jugador o elemento'})[k]}
     <input className="input-dark mt-1" type={k==='from'||k==='to'?'date':k==='actor'?'number':'text'} min={k==='actor'?1:undefined} value={filters[k]} onChange={e=>setFilters({...filters,[k]:e.target.value})}/></label>)}
    <label className="text-sm">Juego<select className="input-dark mt-1" value={filters.game} onChange={e=>setFilters({...filters,game:e.target.value})}><option value="">Todos</option><option>FIFA</option><option>EFOOTBALL</option></select></label>
    <label className="text-sm">Acción<select className="input-dark mt-1" value={filters.action} onChange={e=>setFilters({...filters,action:e.target.value})}><option value="">Todas</option>{['CREAR','ACTUALIZAR','ARCHIVAR','RESTAURAR','ELIMINAR'].map(a=><option key={a}>{a}</option>)}</select></label>
-   <button className="btn-primary">Aplicar filtros</button>
+   <button type="submit" className="btn-primary">Aplicar filtros</button>
   </form>
   {error?<p role="alert">{error}</p>:busy?<p role="status">Cargando historial…</p>:<><p className="text-gray-400 mb-3">{total} cambios de campos</p>
    <div className="space-y-3">{rows.map(r=><article key={r.id} className="glass-card p-4">
@@ -92,6 +92,6 @@ export default function AuditPage(){
      <div className="rounded-lg bg-red-400/10 p-3 break-all"><strong>Antes</strong><pre className="whitespace-pre-wrap max-h-40 overflow-auto">{valueLabel(r.field_name,r.old_value)}</pre></div>
      <div className="rounded-lg bg-green-400/10 p-3 break-all"><strong>Después</strong><pre className="whitespace-pre-wrap max-h-40 overflow-auto">{valueLabel(r.field_name,r.new_value)}</pre></div>
     </div></article>)}</div>{!rows.length&&<p>No hay cambios para estos filtros.</p>}
-   <div className="flex gap-4 my-5"><button disabled={page===0} onClick={()=>setPage(p=>p-1)}>Anterior</button><span>Página {page+1}</span><button disabled={(page+1)*50>=total} onClick={()=>setPage(p=>p+1)}>Siguiente</button></div></>}
+   <div className="flex gap-4 my-5"><button type="button" disabled={page===0} onClick={()=>setPage(p=>p-1)}>Anterior</button><span>Página {page+1}</span><button type="button" disabled={(page+1)*50>=total} onClick={()=>setPage(p=>p+1)}>Siguiente</button></div></>}
  </Layout>;
 }

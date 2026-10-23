@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ShoppingCart, Eye, Star, Trophy } from 'lucide-react';
 import type { Player } from '../../types';
 import { useCart } from '../../hooks/useCart';
@@ -25,7 +25,6 @@ const positionLabels: Record<string, string> = {
 
 const PlayerCard: React.FC<PlayerCardProps> = ({ player }) => {
   const { addToCart } = useCart();
-  const navigate = useNavigate();
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -50,8 +49,8 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player }) => {
   const hasStats = (player.stats?.length ?? 0) > 0;
 
   return (
-    <div className="glass-card player-card-hover p-5 flex flex-col gap-4 cursor-pointer group"
-         onClick={() => navigate(`/players/${player.id}`)}>
+    <div className="glass-card player-card-hover p-5 flex flex-col gap-4 group">
+      <Link to={`/players/${player.id}`} className="flex flex-col gap-4 flex-1">
       
       {/* Avatar / Image */}
       <div className="relative">
@@ -104,8 +103,9 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player }) => {
         )}
       </div>
 
+      </Link>
       {/* Actions */}
-      <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+      <div className="flex gap-2">
         <Link
           to={`/players/${player.id}`}
           className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white transition-all duration-200"

@@ -28,7 +28,7 @@ public class ImageStorage {
    throw new IllegalArgumentException("Solo imágenes JPG, PNG o WebP válidas");
  }
  public String save(MultipartFile file, String base) throws Exception {
-   if(file.isEmpty() || file.getSize()>10*1024*1024) throw new IllegalArgumentException("Imagen vacía o mayor a 10 MB");
+   if(file.isEmpty() || file.getSize()>7*1024*1024) throw new IllegalArgumentException("Imagen vacía o mayor a 7 MB");
    byte[] bytes=file.getBytes();
    String ext=extension(bytes);
    if(provider.equals("local")) {

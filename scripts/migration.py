@@ -4,6 +4,7 @@ Restore refuses any nonempty public schema. Images generates SQL, never applies 
 """
 import argparse, csv, getpass, hashlib, json, os, pathlib, re, shutil, subprocess, sys, time
 import urllib.request, urllib.parse
+from safe_inputs import HTTP, image_inventory, select_image, cloud_image_url
 
 def pg(name):
     return str(pathlib.Path(args.pg_bin)/(name+'.exe' if os.name=='nt' else name)) if args.pg_bin else name
@@ -60,16 +61,17 @@ def quote(s): return "'"+s.replace("'","''")+"'"
 
 def images():
     root=pathlib.Path(args.uploads).resolve()
+    inventory=image_inventory(root)
     rows=list(csv.DictReader(pathlib.Path(args.csv).read_text(encoding='utf-8-sig').splitlines()))
     local=[]; external=0
     for r in rows:
         url=r.get('imagen_url','')
+        if '$$' in url or '\x00' in url: raise ValueError('Invalid image URL in CSV')
         if not url: continue
         parsed=urllib.parse.urlparse(url)
         if '/uploads/players/' not in parsed.path:
             external+=1; continue
-        name=urllib.parse.unquote(parsed.path.rsplit('/',1)[-1]); path=(root/name).resolve()
-        if path.parent!=root or not path.is_file(): raise ValueError(f'Missing/unsafe image: {name}')
+        path=select_image(inventory,url)
         if r['tabla'] not in ('players','jugadores') or not r['id'].isdigit(): raise ValueError('Invalid image record')
         local.append((r,path))
     print(f'Preflight: {len(local)} local references, {len(set(p for _,p in local))} files, {external} external references unchanged.')
@@ -89,20 +91,19 @@ def images():
             timestamp=str(int(time.time()))
             fields={'public_id':'caza/migration/'+digest,'timestamp':timestamp,'overwrite':'false'}
             signed='&'.join(k+'='+fields[k] for k in sorted(fields))
-            fields.update(api_key=key,signature=hashlib.sha1((signed+secret).encode()).hexdigest())
+            fields.update(api_key=key,signature=hashlib.sha256((signed+secret).encode()).hexdigest())
             boundary='CAZA'+os.urandom(12).hex()
             body=b''
             for k,v in fields.items(): body+=f'--{boundary}\r\nContent-Disposition: form-data; name="{k}"\r\n\r\n{v}\r\n'.encode()
             body+=f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="{path.name}"\r\nContent-Type: application/octet-stream\r\n\r\n'.encode()+path.read_bytes()+f'\r\n--{boundary}--\r\n'.encode()
             req=urllib.request.Request(f'https://api.cloudinary.com/v1_1/{cloud}/image/upload',data=body,headers={'Content-Type':'multipart/form-data; boundary='+boundary})
-            with urllib.request.urlopen(req,timeout=90) as response: data=json.load(response)
-            url=data['secure_url']
-            if not url.startswith('https://res.cloudinary.com/'): raise ValueError('Unexpected image URL')
+            with HTTP.open(req,timeout=90) as response: data=json.load(response)
+            url=cloud_image_url(data['secure_url'],cloud)
             manifest[identity]={'file':path.name,'sha256':digest,'url':url,'public_id':data['public_id']}
             temporary=journal.with_suffix('.tmp'); temporary.write_text(json.dumps(manifest,indent=2),encoding='utf-8'); temporary.replace(journal)
-        url=manifest[identity]['url']
+        url=cloud_image_url(manifest[identity]['url'],cloud)
         # Confirm URL is available before emitting a DB change.
-        with urllib.request.urlopen(urllib.request.Request(url,method='HEAD'),timeout=30) as response:
+        with HTTP.open(urllib.request.Request(url,method='HEAD'),timeout=30) as response:
             if not response.headers.get('Content-Type','').startswith('image/'): raise ValueError('URL is not an image')
         table=r['tabla']; rid=r['id']; old=r['imagen_url']
         updates.append(f"DO $$ BEGIN UPDATE public.{table} SET imagen_url={quote(url)} WHERE id={rid} AND imagen_url={quote(old)}; IF NOT FOUND THEN RAISE EXCEPTION 'Image mapping mismatch: {table}/{rid}'; END IF; END $$;")

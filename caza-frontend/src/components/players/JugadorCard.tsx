@@ -16,7 +16,7 @@ interface JugadorCardProps {
 const fmt = (v: number | undefined | null): string => {
   if (v == null) return '—';
   const n = Number(v);
-  return isNaN(n) ? '—' : n.toFixed(2).replace(/\.?0+$/, '') || '0';
+  return !Number.isFinite(n) ? '—' : String(Number(n.toFixed(2)));
 };
 
 const JugadorCard: React.FC<JugadorCardProps> = ({ jugador, onEdit, onDelete }) => {
@@ -63,7 +63,7 @@ const JugadorCard: React.FC<JugadorCardProps> = ({ jugador, onEdit, onDelete }) 
       <div className="flex items-center gap-3">
         <div
           className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden"
-          style={jugador.imagenUrl ? { background: 'linear-gradient(135deg, #FF8C00, #FF4500)' } : { background: 'linear-gradient(135deg, #FF8C00, #FF4500)' }}
+          style={{ background: 'linear-gradient(135deg, #FF8C00, #FF4500)' }}
         >
           {jugador.imagenUrl ? (
             <img
@@ -142,7 +142,7 @@ const JugadorCard: React.FC<JugadorCardProps> = ({ jugador, onEdit, onDelete }) 
 
       {/* Acciones */}
       {user && (
-        <div className="flex gap-2 mt-1" onClick={(e) => e.stopPropagation()}>
+        <div className="flex gap-2 mt-1">
           {/* Agregar al carrito — disponible para todos los usuarios */}
           <button
             onClick={handleAddToCart}

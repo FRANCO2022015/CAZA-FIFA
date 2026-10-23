@@ -75,7 +75,7 @@ export function useSaldoNotifications() {
     };
 
     // Ejecutar inmediatamente para cargar estados iniciales
-    poll();
+    void poll();
 
     const interval = setInterval(poll, POLL_INTERVAL_MS);
     return () => clearInterval(interval);

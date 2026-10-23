@@ -1,3 +1,4 @@
+import { validateToken } from '../utils/sessionValidation';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail, ArrowLeft, ShieldCheck } from 'lucide-react';
@@ -24,18 +25,9 @@ const AdminLoginPage: React.FC = () => {
         return;
       }
 
-      // Persistir la sesión manualmente en localStorage
-      const userData = {
-        id: response.userId,
-        nombre: response.nombre,
-        correo: response.correo,
-        rol: response.rol,
-        saldo: response.saldo,
-        fechaRegistro: new Date().toISOString(),
-        activo: true,
-      };
-      localStorage.setItem('caza_token', response.accessToken);
-      localStorage.setItem('caza_user', JSON.stringify(userData));
+      const token = validateToken(response.accessToken);
+      localStorage.setItem('caza_token', token);
+      localStorage.removeItem('caza_user');
 
       toast.success(`¡Bienvenido, Admin ${response.nombre}! ⭐`);
 

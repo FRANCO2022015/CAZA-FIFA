@@ -35,7 +35,7 @@ const ForumThreadPage: React.FC = () => {
         navigate('/forum');
       } finally { setIsLoading(false); }
     };
-    load();
+    void load();
   }, [id, navigate]);
 
   const handleReply = async (e: React.FormEvent) => {

@@ -1,3 +1,4 @@
+from safe_inputs import HTTP, local_api_url
 import os,json,time,urllib.request,urllib.error,urllib.parse,concurrent.futures
 from pathlib import Path
 BASE=os.environ.get('CAZA_TEST_URL','http://127.0.0.1:18081/api')
@@ -7,9 +8,9 @@ def call(method,path,body=None,token=None,status=200):
  global count
  headers={'Content-Type':'application/json'}
  if token:headers['Authorization']='Bearer '+token
- req=urllib.request.Request(BASE+path,data=json.dumps(body).encode() if body is not None else None,headers=headers,method=method)
+ req=urllib.request.Request(local_api_url(BASE,path),data=json.dumps(body).encode() if body is not None else None,headers=headers,method=method)
  try:
-  with urllib.request.urlopen(req,timeout=30) as res: code=res.status;data=json.load(res)
+  with HTTP.open(req,timeout=30) as res: code=res.status;data=json.load(res)
  except urllib.error.HTTPError as e:
   code=e.code
   try:data=json.load(e)

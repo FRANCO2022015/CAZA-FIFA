@@ -26,13 +26,7 @@ const AdminPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [processingId, setProcessingId] = useState<number | null>(null);
 
-  // Leer el usuario directamente desde localStorage como fallback
-  // (evita problemas de timing con React state después de window.location.href)
-  const storedUser = (() => {
-    try { return JSON.parse(localStorage.getItem('caza_user') || 'null'); }
-    catch { return null; }
-  })();
-  const effectiveUser = user ?? storedUser;
+  const effectiveUser = user;
 
   // Guard: solo admin
   useEffect(() => {
@@ -67,7 +61,7 @@ const AdminPage: React.FC = () => {
 
   useEffect(() => {
     if (effectiveUser?.rol === 'ADMIN') {
-      load();
+      void load();
     }
   }, []); // eslint-disable-line
 

@@ -1,4 +1,5 @@
 """Read-only cloud smoke test. Never creates users, purchases or balance changes."""
+from safe_inputs import HTTP, cloud_image_url
 import argparse, getpass, json, urllib.request, urllib.error
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument('--api',required=True,help='https://your-backend.onrender.com/api')
@@ -9,7 +10,7 @@ def request(path,token=None,data=None):
     headers={'Origin':a.origin,'Content-Type':'application/json'}
     if token: headers['Authorization']='Bearer '+token
     req=urllib.request.Request(base+path,headers=headers,data=json.dumps(data).encode() if data else None)
-    with urllib.request.urlopen(req,timeout=120) as r:
+    with HTTP.open(req,timeout=120) as r:
         assert r.headers.get('Access-Control-Allow-Origin')==a.origin,'CORS origin mismatch'
         return json.load(r)
 request('/health'); print('PASS: health/database and CORS')
@@ -22,8 +23,8 @@ for kind in ('players','jugadores'):
         count+=len(data['content']);page+=1
         if page>=data['totalPages']:break
     for url in images:
-        assert url.startswith('https://'),'Image still uses local/non-HTTPS URL: '+url
-        with urllib.request.urlopen(urllib.request.Request(url,method='HEAD'),timeout=30) as r:
+        url=cloud_image_url(url)
+        with HTTP.open(urllib.request.Request(url,method='HEAD'),timeout=30) as r:
             assert r.headers.get('Content-Type','').startswith('image/'),'Not an image'
     print(f'PASS: {kind}, {count} records, {len(images)} accessible HTTPS images')
 if a.email:

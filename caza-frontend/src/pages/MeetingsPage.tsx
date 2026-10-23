@@ -20,10 +20,10 @@ const MeetingsPage: React.FC = () => {
     try {
       const data = await meetingsApi.getMeetings();
       setMeetings(data);
-    } finally { setIsLoading(false); }
+    } catch { toast.error('No se pudieron cargar los datos. Vuelve a intentarlo.'); } finally { setIsLoading(false); }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { void load(); }, []);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,34 +112,33 @@ const MeetingsPage: React.FC = () => {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-             style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}
-             onClick={() => setShowModal(false)}>
-          <div className="glass-card-elevated w-full max-w-lg p-6 animate-slideUp" onClick={e => e.stopPropagation()}>
+             style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}>
+          <div role="dialog" aria-modal="true" aria-label="Crear reunión" className="glass-card-elevated w-full max-w-lg p-6 animate-slideUp">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-white">Nueva reunión</h2>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-300 mb-2">Tema de la reunión</label>
-                <input type="text" value={form.tema} onChange={e => setForm(p => ({ ...p, tema: e.target.value }))}
+                <label htmlFor="meetingspage-field-1" className="block text-sm text-gray-300 mb-2">Tema de la reunión</label>
+                <input id="meetingspage-field-1" type="text" value={form.tema} onChange={e => setForm(p => ({ ...p, tema: e.target.value }))}
                   placeholder="Ej: Revisión de jugadores" className="input-dark" required />
               </div>
               <div>
-                <label className="block text-sm text-gray-300 mb-2">URL de la reunión</label>
-                <input type="url" value={form.url} onChange={e => setForm(p => ({ ...p, url: e.target.value }))}
+                <label htmlFor="meetingspage-field-2" className="block text-sm text-gray-300 mb-2">URL de la reunión</label>
+                <input id="meetingspage-field-2" type="url" value={form.url} onChange={e => setForm(p => ({ ...p, url: e.target.value }))}
                   placeholder="https://meet.google.com/..." className="input-dark" required />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm text-gray-300 mb-2">Inicio</label>
-                  <input type="datetime-local" value={form.fechaInicio}
+                  <label htmlFor="meetingspage-field-3" className="block text-sm text-gray-300 mb-2">Inicio</label>
+                  <input id="meetingspage-field-3" type="datetime-local" value={form.fechaInicio}
                     onChange={e => setForm(p => ({ ...p, fechaInicio: e.target.value }))}
                     className="input-dark" required />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-300 mb-2">Fin</label>
-                  <input type="datetime-local" value={form.fechaFin}
+                  <label htmlFor="meetingspage-field-4" className="block text-sm text-gray-300 mb-2">Fin</label>
+                  <input id="meetingspage-field-4" type="datetime-local" value={form.fechaFin}
                     onChange={e => setForm(p => ({ ...p, fechaFin: e.target.value }))}
                     className="input-dark" required />
                 </div>

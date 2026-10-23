@@ -82,7 +82,7 @@ export default function AddPlayerModal({isOpen,section,editingPlayer,editingJuga
    aria-invalid={!!errors[key]} aria-describedby={errors[key]?`error-${key}`:undefined}
    onChange={e=>change(key,type==='number'?Number(e.target.value):e.target.value)}/>
   {errors[key]&&<span id={`error-${key}`} className="text-red-300 text-xs">{errors[key]}</span>}</label>;
- return <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/80" onClick={e=>{if(e.target===e.currentTarget)close()}}>
+ return <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/80">
   <div ref={dialog} role="dialog" aria-modal="true" aria-labelledby="player-editor-title" className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-2xl border border-white/10 bg-[#12122A]">
    <header className="sticky top-0 z-10 bg-[#12122A] p-5 border-b border-white/10 flex justify-between">
     <div><h2 id="player-editor-title" className="text-xl font-bold">{editing?'Editar jugador':'Nuevo jugador'} · {section}</h2><p className="text-xs text-gray-400 mt-1">{dirty?'Cambios pendientes de guardar':'Información del jugador'}</p></div>
@@ -115,7 +115,7 @@ export default function AddPlayerModal({isOpen,section,editingPlayer,editingJuga
      </section>
     </fieldset>
     {errors._form&&<p role="alert" className="rounded-xl bg-red-500/10 p-3 text-red-300">{errors._form}</p>}
-    <button disabled={busy||uploading} className="btn-primary w-full flex justify-center gap-2"><Save size={18}/>{busy?'Guardando…':'Guardar todos los cambios'}</button>
+    <button type="submit" disabled={busy||uploading} className="btn-primary w-full flex justify-center gap-2"><Save size={18}/>{busy?'Guardando…':'Guardar todos los cambios'}</button>
    </form>}
   </div>
  </div>;
