@@ -38,6 +38,7 @@ const EFOOTBALL_SORT_OPTIONS: SortOption[] = [
   { value: 'goles',       label: 'Goles' },
   { value: 'asistencias', label: 'Asistencias' },
   { value: 'partidos',    label: 'Partidos' },
+  { value: 'ga',          label: 'GA' },
   { value: 'pg',          label: 'PG' },
   { value: 'pa',          label: 'PA' },
   { value: 'pga',         label: 'PGA' },
