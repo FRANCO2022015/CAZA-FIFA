@@ -66,9 +66,9 @@ public class ComicController {
   for(int i=0;i<input.ids().size();i++)jdbc.update("UPDATE comic_pages SET sort_order=? WHERE id=? AND chapter_id=?",i,input.ids().get(i),id);
   return ApiResponse.success("Orden actualizado",null);
  }
- @GetMapping("/pages/{id}/url") public ResponseEntity<?> url(@PathVariable long id) throws Exception {
+ @GetMapping("/pages/{id}/url") public ResponseEntity<?> url(@PathVariable long id, @RequestParam(defaultValue="false") boolean download) throws Exception {
   var rows=jdbc.queryForList("SELECT asset_id FROM comic_pages WHERE id=?",String.class,id);
   if(rows.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-  return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(ApiResponse.success(Map.of("url",storage.readUrl(rows.get(0)))));
+  return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(ApiResponse.success(Map.of("url",storage.readUrl(rows.get(0),download))));
  }
 }

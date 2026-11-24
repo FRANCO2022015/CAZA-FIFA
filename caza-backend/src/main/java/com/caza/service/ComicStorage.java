@@ -60,12 +60,13 @@ public class ComicStorage {
    return id;
   } catch(Exception e) {throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,"No se pudo subir el PNG a Cloudinary");}
  }
- public String readUrl(String id) throws Exception {
+ public String readUrl(String id) throws Exception { return readUrl(id, false); }
+ public String readUrl(String id, boolean download) throws Exception {
   configured();
   if(!id.matches("caza/comics/[a-f0-9-]{36}")) throw new IllegalArgumentException("Imagen inválida");
   long now=System.currentTimeMillis()/1000;
   var params=new TreeMap<String,String>();params.put("public_id",id);params.put("format","png");params.put("type","authenticated");
-  params.put("timestamp",Long.toString(now));params.put("expires_at",Long.toString(now+300));params.put("attachment","false");
+  params.put("timestamp",Long.toString(now));params.put("expires_at",Long.toString(now+300));params.put("attachment",download?"true":"false");
   var uri=UriComponentsBuilder.fromHttpUrl("https://api.cloudinary.com/v1_1/"+cloud+"/image/download");
   params.forEach(uri::queryParam);uri.queryParam("api_key",key).queryParam("signature",signature(params));
   return uri.build().encode().toUriString();

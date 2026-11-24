@@ -1,0 +1,18 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const Module = require('node:module');
+const ts = require('../caza-frontend/node_modules/typescript');
+const filename = path.resolve(__dirname, '../caza-frontend/src/utils/comparison.ts');
+const compiled = ts.transpileModule(fs.readFileSync(filename, 'utf8'), {compilerOptions:{module:ts.ModuleKind.CommonJS}});
+const loaded = new Module(filename); loaded._compile(compiled.outputText, filename);
+const {buildTimeline, firstOvertake} = loaded.exports;
+const row=(id,playerId,day,goles)=>({id,playerId,at:`2026-11-${String(day).padStart(2,'0')}T00:00:00Z`,goles,asistencias:0,partidos:0});
+const points=buildTimeline([row(4,2,6,120),row(1,1,1,100),row(3,2,3,50),row(2,2,2,5)],1,2,'goles');
+assert.equal(points[0].b,null);assert.equal(points[2].a,100);
+assert.equal(firstOvertake(points).elapsed,4*86400000);
+assert.equal(firstOvertake(buildTimeline([row(1,1,1,100),row(2,2,2,120)],1,2,'goles')),null);
+assert.equal(firstOvertake(buildTimeline([row(1,1,1,100),row(2,2,2,100)],1,2,'goles')),null);
+assert.equal(firstOvertake([]),null);
+assert.equal(buildTimeline([row(1,1,1,100),row(2,2,1,50)],1,2,'goles').length,1);
+console.log('PASS timeline: ordering, missing baseline, carried values, crossing, tie, already ahead, empty and simultaneous updates');

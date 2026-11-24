@@ -24,7 +24,7 @@ class ComicSecurityTest {
    SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("user","",List.of(new SimpleGrantedAuthority("ROLE_USER"))));
    assertThrows(AccessDeniedException.class,controller::tree);
    assertThrows(AccessDeniedException.class,()->controller.create(new ComicController.FolderInput("Test","SECTION",null,0)));
-   assertThrows(AccessDeniedException.class,()->controller.url(1));
+   assertThrows(AccessDeniedException.class,()->controller.url(1,false));
    assertThrows(AccessDeniedException.class,()->controller.upload(1,null));
    assertThrows(AccessDeniedException.class,()->controller.reorder(1,new ComicController.ReorderInput(List.of())));
    verifyNoInteractions(context.getBean(JdbcTemplate.class),context.getBean(ComicStorage.class));

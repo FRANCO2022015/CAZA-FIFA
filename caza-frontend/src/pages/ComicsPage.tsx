@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Folder, Image as ImageIcon, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Maximize } from 'lucide-react';
+import { Folder, Image as ImageIcon, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Maximize, Download } from 'lucide-react';
 import Layout from '../components/layout/Layout';
 import { useAuth } from '../hooks/useAuth';
 import api from '../api/axiosConfig';
@@ -16,6 +16,7 @@ export default function ComicsPage(){
  const [name,setName]=useState(''),[busy,setBusy]=useState(false),[progress,setProgress]=useState(''),[error,setError]=useState('');
  const [reader,setReader]=useState<number|null>(null),[url,setUrl]=useState(''),[imageError,setImageError]=useState(false),[retry,setRetry]=useState(0),[zoom,setZoom]=useState(1);
  const [editing,setEditing]=useState<number|null>(null),[editName,setEditName]=useState(''),[editOrder,setEditOrder]=useState(0);
+ const [downloading,setDownloading]=useState<number|null>(null);
  const [loading,setLoading]=useState(true);
  const readerRef=useRef<HTMLDialogElement>(null),scroller=useRef<HTMLDivElement>(null),fileInput=useRef<HTMLInputElement>(null);
  const refresh=useCallback(async()=>{const r=await api.get('/comics');setTree(r.data.data);},[]);
@@ -57,6 +58,17 @@ export default function ComicsPage(){
   const reordered=[...chapterPages];[reordered[at],reordered[at+delta]]=[reordered[at+delta],reordered[at]];
   try{await api.put(`/comics/chapters/${parent}/order`,{ids:reordered.map(v=>v.id)});await refresh();}catch{setError('No se pudo cambiar el orden. Recarga y vuelve a intentarlo.');}finally{setBusy(false);}
  }
+ async function downloadImage(p:Page){
+  if(downloading!==null)return;
+  setDownloading(p.id);
+  try{
+   const response=await api.get(`/comics/pages/${p.id}/url`,{params:{download:true}});
+   const link=document.createElement('a');link.href=response.data.data.url;
+   link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';
+   document.body.appendChild(link);link.click();link.remove();
+  }catch{toast.error('No se pudo descargar la imagen. Vuelve a intentarlo.');}
+  finally{setDownloading(null);}
+ }
  async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await readerRef.current?.requestFullscreen();}catch{toast.error('Tu navegador no permite pantalla completa; puedes usar el lector ampliado.');}}
  return <Layout><div className="space-y-6">
   <header><p className="text-purple-300 uppercase tracking-widest text-sm">Biblioteca privada / Administrador</p><h1 className="text-3xl font-bold mt-2">Mi historieta</h1><p className="text-gray-400 mt-2">Organiza tus secciones, sagas y capítulos. Lee todas las páginas sin salir del visor.</p></header>
@@ -67,13 +79,13 @@ export default function ComicsPage(){
   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{children.map(f=><article key={f.id} className="rounded-2xl border border-white/10 bg-white/5 p-5"><button type="button" disabled={busy} className="text-left w-full" onClick={()=>{setParent(f.id);setEditing(null);setName('');setError('');}}><Folder className="text-purple-400 mb-3"/><h2 className="font-bold text-lg break-words">{f.name}</h2><p className="text-gray-400 text-sm">{f.kind==='SECTION'?'Sección':f.kind==='SAGA'?'Saga':'Capítulo'} · Orden {f.sort_order}</p></button><button type="button" disabled={busy} className="text-purple-300 text-sm mt-4" onClick={()=>{setEditing(f.id);setEditName(f.name);setEditOrder(f.sort_order);}}>Editar nombre y orden</button></article>)}</div>
   {current?.kind==='CHAPTER'&&<><section className="border border-dashed border-purple-400/50 rounded-2xl p-6"><label className="block font-semibold">Añadir páginas PNG<input ref={fileInput} type="file" accept="image/png,.png" multiple disabled={busy} className="block mt-3 max-w-full" onChange={e=>void upload(e.target.files)}/></label><p className="text-gray-400 text-sm mt-3">Hasta 7 MB por página. Se suben en orden natural de nombre: 1.png, 2.png, 10.png. Puedes cambiar el orden después.</p></section>
    {chapterPages.length>0&&<button type="button" className="btn-primary" onClick={()=>setReader(chapterPages[0].id)}>Leer capítulo</button>}
-   <ol className="space-y-2">{chapterPages.map((p,i)=><li key={p.id} className="flex gap-3 items-center rounded-xl bg-white/5 p-3"><ImageIcon className="shrink-0 text-purple-300"/><button type="button" className="text-left flex-1 min-w-0 break-words" onClick={()=>setReader(p.id)}>{i+1}. {p.name}</button><button type="button" aria-label={`Subir ${p.name}`} disabled={busy||i===0} onClick={()=>void reorder(p,-1)} className="btn-secondary">↑</button><button type="button" aria-label={`Bajar ${p.name}`} disabled={busy||i===chapterPages.length-1} onClick={()=>void reorder(p,1)} className="btn-secondary">↓</button></li>)}</ol>
+   <ol className="space-y-2">{chapterPages.map((p,i)=><li key={p.id} className="flex gap-3 items-center rounded-xl bg-white/5 p-3"><ImageIcon className="shrink-0 text-purple-300"/><button type="button" className="text-left flex-1 min-w-0 break-words" onClick={()=>setReader(p.id)}>{i+1}. {p.name}</button><button type="button" aria-label={`Descargar ${p.name}`} title="Descargar imagen" disabled={downloading!==null} onClick={()=>void downloadImage(p)} className="btn-secondary"><Download size={18}/></button><button type="button" aria-label={`Subir ${p.name}`} disabled={busy||i===0} onClick={()=>void reorder(p,-1)} className="btn-secondary">↑</button><button type="button" aria-label={`Bajar ${p.name}`} disabled={busy||i===chapterPages.length-1} onClick={()=>void reorder(p,1)} className="btn-secondary">↓</button></li>)}</ol>
    {!chapterPages.length&&<p className="text-gray-400">Este capítulo todavía no tiene páginas.</p>}</>}
   {!loading&&!children.length&&current?.kind!=='CHAPTER'&&<p className="text-gray-400">Crea la primera carpeta para empezar.</p>}
  </div>
  <dialog ref={readerRef} onCancel={()=>setReader(null)} aria-label="Lector de historieta" className="fixed inset-0 m-0 w-screen h-[100dvh] max-w-none max-h-none bg-slate-950 text-white p-0 backdrop:bg-black"
  onKeyDown={e=>{if(e.key==='ArrowRight'){e.preventDefault();move(1);}if(e.key==='ArrowLeft'){e.preventDefault();move(-1);}}}>
-  {page&&<div className="h-full flex flex-col"><header className="flex flex-wrap gap-2 items-center p-3 bg-slate-900"><div className="flex-1 min-w-40 text-sm"><strong>{readingSaga?.name} / {readingChapter?.name}</strong><p className="text-gray-400">{page.name} · Página {index+1} de {orderedPages.length}</p></div><button type="button" aria-label="Alejar" className="btn-secondary" onClick={()=>setZoom(z=>Math.max(.5,z-.25))}><ZoomOut size={18}/></button><button type="button" className="btn-secondary" onClick={()=>setZoom(1)}>{Math.round(zoom*100)}%</button><button type="button" aria-label="Acercar" className="btn-secondary" onClick={()=>setZoom(z=>Math.min(4,z+.25))}><ZoomIn size={18}/></button><button type="button" aria-label="Pantalla completa" className="btn-secondary" onClick={()=>void fullscreen()}><Maximize size={18}/></button><button type="button" aria-label="Cerrar lector" className="btn-secondary" onClick={()=>{setReader(null);if(document.fullscreenElement)void document.exitFullscreen().catch(()=>{});}}><X size={18}/></button></header>
+  {page&&<div className="h-full flex flex-col"><header className="flex flex-wrap gap-2 items-center p-3 bg-slate-900"><div className="flex-1 min-w-40 text-sm"><strong>{readingSaga?.name} / {readingChapter?.name}</strong><p className="text-gray-400">{page.name} · Página {index+1} de {orderedPages.length}</p></div><button type="button" aria-label="Alejar" className="btn-secondary" onClick={()=>setZoom(z=>Math.max(.5,z-.25))}><ZoomOut size={18}/></button><button type="button" className="btn-secondary" onClick={()=>setZoom(1)}>{Math.round(zoom*100)}%</button><button type="button" aria-label="Acercar" className="btn-secondary" onClick={()=>setZoom(z=>Math.min(4,z+.25))}><ZoomIn size={18}/></button><button type="button" aria-label="Pantalla completa" className="btn-secondary" onClick={()=>void fullscreen()}><Maximize size={18}/></button><button type="button" aria-label="Descargar imagen actual" title="Descargar imagen" disabled={downloading!==null} className="btn-secondary" onClick={()=>void downloadImage(page)}><Download size={18}/></button><button type="button" aria-label="Cerrar lector" className="btn-secondary" onClick={()=>{setReader(null);if(document.fullscreenElement)void document.exitFullscreen().catch(()=>{});}}><X size={18}/></button></header>
    <div ref={scroller} className="flex-1 overflow-auto min-h-0" style={{touchAction:'pan-x pan-y pinch-zoom'}}>
     {imageError?<div role="alert" className="p-8">No se pudo cargar esta página. <button type="button" className="btn-primary" onClick={()=>setRetry(v=>v+1)}>Reintentar</button></div>:!url?<p role="status" className="p-8">Cargando página…</p>:<div className="mx-auto flex justify-center" style={{width:`${zoom*100}%`,height:`${zoom*100}%`,minHeight:'100%'}}><img src={url} alt={`${readingChapter?.name}: ${page.name}`} referrerPolicy="no-referrer" onError={()=>setImageError(true)} className="w-full h-full object-contain"/></div>}
    </div><footer className="flex items-center justify-between p-3 gap-3 bg-slate-900"><button type="button" disabled={index<=0} className="btn-secondary" onClick={()=>move(-1)}><ChevronLeft/>Anterior</button><span className="text-gray-400 text-xs text-center">← → para pasar páginas. El siguiente capítulo continúa automáticamente.</span><button type="button" disabled={index===orderedPages.length-1} className="btn-primary" onClick={()=>move(1)}>Siguiente<ChevronRight/></button></footer>
