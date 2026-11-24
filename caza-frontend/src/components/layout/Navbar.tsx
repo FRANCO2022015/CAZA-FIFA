@@ -9,6 +9,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useCart } from '../../hooks/useCart';
 
 const navItems = [
+  { to: '/compare', label: 'Comparar', icon: Users },
   { to: '/dashboard',    label: 'Dashboard',    icon: LayoutDashboard },
   { to: '/players',      label: 'Jugadores',    icon: Users },
   { to: '/team-builder', label: 'Armar Equipo', icon: Swords },
@@ -101,6 +102,7 @@ const Navbar: React.FC = () => {
                     <p className="text-xs text-gray-400 truncate">{user?.correo}</p>
                   </div>
                   {user?.rol === 'ADMIN' && <Link to="/admin" className="block px-4 py-3 text-sm text-purple-300">Administración</Link>}
+                  {user?.rol === 'ADMIN' && <Link to="/admin/comics" className="block px-4 py-3 text-sm text-purple-300">Mi historieta</Link>}
                   <Link to="/purchases" className="block px-4 py-3 text-sm text-gray-300">Mis compras</Link>
                   <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors">
                     <LogOut className="w-4 h-4" />
@@ -139,6 +141,7 @@ const Navbar: React.FC = () => {
             </Link>
             <RequestsLink />
             {user?.rol === 'ADMIN' && <Link to="/admin" className="block p-3 text-purple-300">Administración</Link>}
+            {user?.rol === 'ADMIN' && <Link to="/admin/comics" className="block p-3 text-purple-300">Mi historieta</Link>}
             <hr style={{ borderColor: 'rgba(255,255,255,0.06)' }} />
             <div className="px-3 py-2 flex items-center gap-3">
               <Coins className="w-5 h-5 text-green-400" />

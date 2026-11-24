@@ -1,3 +1,5 @@
+import ComparisonPage from './pages/ComparisonPage';
+import ComicsPage from './pages/ComicsPage';
 import React from 'react';
 import AuditPage from './pages/AuditPage';
 import RequestsPage from './pages/RequestsPage';
@@ -62,6 +64,8 @@ const App: React.FC = () => {
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard"    element={<DashboardPage />} />
               <Route path="/requests" element={<RequestsPage />} />
+              <Route path="/compare" element={<ComparisonPage />} />
+              <Route path="/admin/comics" element={<ComicsPage />} />
               <Route path="/players"      element={<PlayersPage />} />
               <Route path="/players/:id"  element={<PlayerDetailPage />} />
               <Route path="/cart"         element={<CartPage />} />

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import WorkspaceOverview from '../components/WorkspaceOverview';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -118,13 +119,15 @@ const AdminPage: React.FC = () => {
 
   if (isLoading) return (
     <Layout>
+      <Link to="/admin/comics" className="btn-primary inline-flex mb-6">Mi historieta →</Link>
 <div className="flex flex-wrap gap-3 mb-6"><a className="btn-primary" href="/admin/audit">Historial de cambios y PDF</a><a className="btn-primary" href="/admin/archive">Jugadores archivados</a></div>
       <div className="flex justify-center py-20"><LoadingSpinner size="lg" /></div>
     </Layout>
   );
 
   return (
-    <Layout><WorkspaceOverview /><div className="flex flex-wrap gap-3 mb-6"><a className="btn-primary" href="/admin/audit">Historial de cambios y PDF</a><a className="btn-primary" href="/admin/archive">Jugadores archivados</a></div>
+    <Layout>
+      <Link to="/admin/comics" className="btn-primary inline-flex mb-6">Mi historieta →</Link><WorkspaceOverview /><div className="flex flex-wrap gap-3 mb-6"><a className="btn-primary" href="/admin/audit">Historial de cambios y PDF</a><a className="btn-primary" href="/admin/archive">Jugadores archivados</a></div>
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
         <button onClick={() => navigate('/dashboard')}
